@@ -98,12 +98,28 @@ class TestQualtrics(unittest.TestCase):
             self.assertIsNotNone(self.qualtrics.json_response)
             self.assertIsNone(self.qualtrics.last_error_message)
 
+        result = self.qualtrics.removeRecipient(LibraryID=self.library_id,
+                                                PanelID=panel_id,
+                                                RecipientID=recipient_id)
+        self.assertIsNone(self.qualtrics.last_error_message)
+        self.assertEqual(result, True)
+
+        count = self.qualtrics.getPanelMemberCount(self.library_id, panel_id)
+        self.assertEqual(count, 0)
+
         result = self.qualtrics.deletePanel(
                              library_id=self.library_id,
                              panel_id=panel_id)
         self.assertEqual(result, True)
         self.assertIsNone(self.qualtrics.last_error_message)
         self.assertIsNotNone(self.qualtrics.json_response)
+
+    def test_panel_errors(self):
+        result = self.qualtrics.removeRecipient(LibraryID=self.library_id,
+                                                PanelID="",
+                                                RecipientID="")
+        self.assertEqual(result, False)
+        self.assertEqual(self.qualtrics.last_error_message, "Invalid request. Missing or invalid parameter RecipientID.")
 
     def test_deletion_errors(self):
         result = self.qualtrics.deletePanel(library_id="",

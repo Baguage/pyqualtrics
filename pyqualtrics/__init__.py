@@ -167,6 +167,19 @@ class Qualtrics(object):
             return None
         return self.json_response["Result"]["Recipient"]
 
+    def removeRecipient(self, LibraryID, PanelID, RecipientID, **kwargs):
+        """ Removes the specified panel member recipient from the specified panel.
+        https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#removeRecipient_2.5
+
+        :param LibraryID: The library the recipient belongs to
+        :param PanelID: The panel to remove the recipient from
+        :param RecipientID: The recipient id of the person that will be updated
+        :return: True if successful, False otherwise
+        """
+        if not self.request("removeRecipient", LibraryID=LibraryID, PanelID=PanelID, RecipientID=RecipientID, **kwargs):
+            return False
+        return True
+
     def sendSurveyToIndividual(self, **kwargs):
         """ Sends a survey through the Qualtrics mailer to the individual specified.
         Note that request will be put to queue and emails are not sent immediately (altough they usually
