@@ -1,4 +1,7 @@
+# Copyright (C) 2015, Alex Vyushkov
+import csv
 import json
+from StringIO import StringIO
 import requests
 
 
@@ -23,7 +26,7 @@ class Qualtrics(object):
         self.last_url = None
         self.json_response = None
 
-    def request(self, Request, **kwargs):
+    def request(self, Request, post_data=None, **kwargs):
         """ Send GET request to Qualtrics API
         https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#overview_2.5
 
@@ -54,8 +57,13 @@ class Qualtrics(object):
             for key in ed:
                 params["ED[%s]" % key] = ed[key]
 
-        r = requests.get(self.url,
-                         params=params)
+        if post_data:
+            r = requests.post(self.url,
+                              data=post_data,
+                              params=params)
+        else:
+            r = requests.get(self.url,
+                             params=params)
         self.last_url = r.url
         try:
             json_response = json.loads(r.text)
@@ -222,3 +230,52 @@ class Qualtrics(object):
         :return:
         """
         return self.request("getLegacyResponseData", SurveyID=SurveyID, **kwargs)
+
+    def importPanel(self, LibraryID, Name, CSV, **kwargs):
+        """ Imports a csv file as a new panel (optionally it can append to a previously made panel) into the database
+        and returns the panel id.  The csv file can be posted (there is an approximate 8 megabytes limit)  or a url can
+        be given to retrieve the file from a remote server.
+        The csv file must be comma separated using " for encapsulation.
+
+        https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#importPanel_2.5
+
+        :param LibraryID:
+        :param Name:
+        :param CSV:
+        :return:
+        """
+        result = self.request("importPanel", post_data=CSV, LibraryID=LibraryID, Name=Name, **kwargs)
+        return result["Result"]["PanelID"]
+
+    def importJsonPanel(self, LibraryID, Name, panel, **kwargs):
+        """ Import JSON document as a new panel. Example document:
+        [
+        {"Email": "pyqualtrics@gmail.com", "FirstName": "PyQualtrics", "LastName": "Library"},
+        {"Email": "pyqualtrics+2@gmail.com", "FirstName": "PyQualtrics2", "LastName": "Library2"}
+        ]
+
+        :param LibraryID:
+        :param Name:
+        :param panel:
+        :param kwargs:
+        :return:
+        """
+        headers = ["Email", "FirstName", "LastName", "ExternalRef"]
+        buffer = str()
+        fp = StringIO(buffer)
+        dictwriter = csv.DictWriter(fp, fieldnames=headers)
+        dictwriter.writeheader()
+        for subject in panel:
+            dictwriter.writerow(subject)
+
+        CSV = fp.getvalue()
+        return self.importPanel(LibraryID=LibraryID,
+                                Name=Name,
+                                CSV=CSV,
+                                ColumnHeaders="1",
+                                Email=headers.index("Email") + 1,
+                                FirstName=headers.index("FirstName") + 1,
+                                LastName=headers.index("LastName") + 1,
+                                ExternalRef=headers.index("ExternalRef") + 1,
+                                **kwargs
+                                )

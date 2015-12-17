@@ -1,5 +1,4 @@
-# Copyright (C) 2015, University of Notre Dame
-# All rights reserved
+# Copyright (C) 2015, Alex Vyushkov
 import random
 import string
 
