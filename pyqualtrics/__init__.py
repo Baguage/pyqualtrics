@@ -247,7 +247,7 @@ class Qualtrics(object):
         result = self.request("importPanel", post_data=CSV, LibraryID=LibraryID, Name=Name, **kwargs)
         return result["Result"]["PanelID"]
 
-    def importJsonPanel(self, LibraryID, Name, panel, **kwargs):
+    def importJsonPanel(self, LibraryID, Name, panel, headers=None, **kwargs):
         """ Import JSON document as a new panel. Example document:
         [
         {"Email": "pyqualtrics@gmail.com", "FirstName": "PyQualtrics", "LastName": "Library"},
@@ -260,7 +260,8 @@ class Qualtrics(object):
         :param kwargs:
         :return:
         """
-        headers = ["Email", "FirstName", "LastName", "ExternalRef"]
+        if headers is None:
+            headers = ["Email", "FirstName", "LastName", "ExternalRef"]
         buffer = str()
         fp = StringIO(buffer)
         dictwriter = csv.DictWriter(fp, fieldnames=headers)
