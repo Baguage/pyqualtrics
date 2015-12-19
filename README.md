@@ -4,7 +4,20 @@ Unofficial python SDK for Qualtrics API
 
 # How to run tests
 
-# 
+# Usage example
+
+This library requires account with Qualtrics API enabled. Check with your Qualtrics representative to see if API 
+Access is available for your account. 
+
+Please refer to http://www.qualtrics.com/university/researchsuite/developer-tools/api-integration/qualtrics-rest-api/ 
+for information on how to get your API TOKEN and Qualtrics IDs.
+
+```python
+qualtrics = Qualtrics(QUALTRICS_USER, QUALTRICS_TOKEN)
+responses = qualtrics.getLegacyResponseData(SurveyID=QUALTRICS_SURVEY_ID)
+for response_id, response in response.itemitem():
+    print response_id + " - " + response["Finished"]
+```
 
 Example JSON document returned by getLegacyResponseData
 {

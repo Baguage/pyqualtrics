@@ -24,7 +24,7 @@ setup(
     name="pyqualtrics",
     version="0.0.1",
     author="Alex Vyushkov",
-    author_email="alex.vyushkov@gmail.com",
+    author_email="pyqualtrics@gmail.com",
     description="Unofficial python SDK for Qualtrics API",
     license="Apache License 2.0",
     keywords="API Qualtrics Survey",
