@@ -206,7 +206,7 @@ class Qualtrics(object):
 
     def sendSurveyToIndividual(self, **kwargs):
         """ Sends a survey through the Qualtrics mailer to the individual specified.
-        Note that request will be put to queue and emails are not sent immediately (altough they usually
+        Note that request will be put to queue and emails are not sent immediately (although they usually
         delivered in a few seconds after this function is complete)
 
         https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#sendSurveyToIndividual_2.5
