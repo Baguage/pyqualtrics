@@ -1,6 +1,10 @@
 # pyqualtrics
+
 Unofficial python SDK for Qualtrics API
 
+# How to run tests
+
+# 
 
 Example JSON document returned by getLegacyResponseData
 {

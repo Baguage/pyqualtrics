@@ -231,6 +231,29 @@ class Qualtrics(object):
         """
         return self.request("getLegacyResponseData", SurveyID=SurveyID, **kwargs)
 
+    def getResponse(self, SurveyID, ResponseID, **kwargs):
+        """ Get data for a single response ResponseID in SurveyID. SurveyID is required by API
+        Refer to https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#getLegacyResponseData_2.5 for additional
+        information about kwargs
+
+        :param SurveyID: The survey you will be getting the responses for.
+        :param ResponseID: The response id of an individual response.
+        :param kwargs: Additional arguments (Labels, Questions, ExportQuestionID, ExportTags, LocalTime, etc)
+        :return: response as Python dictionary.
+        Example:
+        {u'Status': u'0', u'StartDate': u'2015-10-23 10:59:12', u'Q1': 2, u'Q2': 1, u'EndDate': u'2015-10-23 10:59:23',
+        u'Name': u'Freeborni, Anopheles', u'IPAddress': u'129.74.236.110', u'Q3': 2, u'ExternalDataReference': u'',
+        u'Finished': u'1', u'EmailAddress': u'pyqualtrics+2@gmail.com', u'ResponseSet': u'Default Response Set'}
+        """
+        response = self.getLegacyResponseData(SurveyID=SurveyID, ResponseID=ResponseID, **kwargs)
+        if not response:
+            return None
+        if ResponseID not in response:
+            # Should never happen
+            self.last_error_message = "Qualtrics error: ResponseID %s not in response" % ResponseID
+            return None
+        return response[ResponseID]
+
     def importPanel(self, LibraryID, Name, CSV, **kwargs):
         """ Imports a csv file as a new panel (optionally it can append to a previously made panel) into the database
         and returns the panel id.  The csv file can be posted (there is an approximate 8 megabytes limit)  or a url can
