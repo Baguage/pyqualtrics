@@ -19,7 +19,7 @@ import csv
 import json
 from StringIO import StringIO
 import requests
-
+import os
 
 class Qualtrics(object):
     """
@@ -27,13 +27,22 @@ class Qualtrics(object):
     """
     url = "https://survey.qualtrics.com/WRAPI/ControlPanel/api.php"
 
-    def __init__(self, user, token, api_version="2.5"):
+    def __init__(self, user=None, token=None, api_version="2.5"):
         """
-        :param user: The user name.
-        :param token: API token for the user.
-        :param library_id: The library id the panel is in.
+        :param user: The user name. If omitted, value of environment variable QUALTRICS_USER will be used.
+        :param token: API token for the user. If omitted, value of environment variable QUALTRICS_TOKEN will be used.
+        :param api_version: API version to use (this library has been tested with version 2.5).
         """
+        if user is None:
+            user = os.environ.get("QUALTRICS_USER", None)
+        if user is None:
+            raise ValueError("user parameter should be passed to __init__ or enviroment variable  QUALTRICS_USER should be set")  # noqa
         self.user = user
+
+        if token is None:
+            token = os.environ.get("QUALTRICS_TOKEN", None)
+        if token is None:
+            raise ValueError("token parameter should be passed to __init__ or enviroment variable QUALTRICS_TOKEN should be set")  # noqa
         self.token = token
         self.default_api_version = api_version
         # Version must be a string, not an integer or float
