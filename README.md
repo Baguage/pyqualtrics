@@ -2,6 +2,14 @@
 
 Unofficial python SDK for Qualtrics API
 
+# Installation
+
+Install using pip:
+
+`pip install pyqualtrics`
+
+Alternatively, you can install download or clone this repo and call `pip install -e ..`
+
 # How to run tests
 
 # Usage example
@@ -18,6 +26,22 @@ responses = qualtrics.getLegacyResponseData(SurveyID=QUALTRICS_SURVEY_ID)
 for response_id, response in response.itemitem():
     print response_id + " - " + response["Finished"]
 ```
+
+# Documentation
+
+Full documenation is available on wiki.
+
+# Bugs and requests
+
+If you have found a bug or if you have a request for additional functionality, please use the issue tracker on GitHub.
+
+https://github.com/Baguage/pyqualtrics/issues
+
+# License
+
+You can use this under Apache 2.0. See LICENSE.txt file for details.
+
+# Misc
 
 Example JSON document returned by getLegacyResponseData
 {
