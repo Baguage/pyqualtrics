@@ -21,8 +21,8 @@
 # Use setuptools without bundling it
 # https://pythonhosted.org/setuptools/setuptools.html#using-setuptools-without-bundling-it
 # Note this means user will need network connection when running setup.py
-import ez_setup
-ez_setup.use_setuptools()
+# import ez_setup
+# ez_setup.use_setuptools(version="18.2")
 
 from setuptools import setup, find_packages
 
