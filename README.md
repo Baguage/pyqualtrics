@@ -1,7 +1,7 @@
-[![Downloads](https://img.shields.io/pypi/dw/vecnet.openmalaria.svg)](https://pypi.python.org/pypi/pyqualtrics)
-[![Version](https://img.shields.io/pypi/v/vecnet.openmalaria.svg)](https://pypi.python.org/pypi/pyqualtrics)
-[![License](https://img.shields.io/pypi/l/vecnet.openmalaria.svg)](https://pypi.python.org/pypi/pyqualtrics)
-[![Python](https://img.shields.io/pypi/pyversions/vecnet.openmalaria.svg)](https://pypi.python.org/pypi/pyqualtrics)
+[![Downloads](https://img.shields.io/pypi/dw/pyqualtrics.svg)](https://pypi.python.org/pypi/pyqualtrics)
+[![Version](https://img.shields.io/pypi/v/pyqualtrics.svg)](https://pypi.python.org/pypi/pyqualtrics)
+[![License](https://img.shields.io/pypi/l/pyqualtrics.svg)](https://pypi.python.org/pypi/pyqualtrics)
+[![Python](https://img.shields.io/pypi/pyversions/pyqualtrics.svg)](https://pypi.python.org/pypi/pyqualtrics)
 
 PyQualtrics
 =====
@@ -26,10 +26,10 @@ This library requires account with Qualtrics API enabled. Check with your Qualtr
 Access is available for your account. 
 
 Please refer to http://www.qualtrics.com/university/researchsuite/developer-tools/api-integration/qualtrics-rest-api/ 
-for information on how to get your API TOKEN and Qualtrics IDs.
+for information on how to get your API Token and other Qualtrics IDs.
 
 ```python
-from qualtrics import Qualtrics
+from pyqualtrics import Qualtrics
 
 qualtrics = Qualtrics(QUALTRICS_USER, QUALTRICS_TOKEN)
 responses = qualtrics.getLegacyResponseData(SurveyID=QUALTRICS_SURVEY_ID)
@@ -50,6 +50,18 @@ Full documenation is not yet available.
 If you have found a bug or if you have a request for additional functionality, please use the issue tracker on GitHub.
 
 https://github.com/Baguage/pyqualtrics/issues
+
+# Error handling
+
+If API call was not successful, additional information about problem can be found in
+
+qualtrics.last_error_message - Human-readable error message (set to None is no error occurs)
+
+qualtrics.json_response - python dictionary, JSON response returned by the server. May be None (if response is not a JSON document) 
+
+qualtrics.last_url - URL constructed by the library
+
+If maiformed response from Qualtrics is received, RuntimeError exception will be raised.
 
 # License
 
