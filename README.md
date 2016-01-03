@@ -10,13 +10,16 @@ Unofficial python SDK for Qualtrics API
 
 # System requirements
 
-Python 2.7 only
+Python 2.7 only. Requires setuptools. 
+Run `python ez_setup.py` command if you do not have setuptools installed in your virtual environment.
 
 # Installation
 
 Install using pip:
 
 `pip install pyqualtrics`
+
+Development version can installed using `pip install git+https://github.com/Baguage/pyqualtrics.git`
 
 Alternatively, you can download or clone this repo and call `pip install -e ..`
 
