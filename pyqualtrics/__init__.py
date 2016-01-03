@@ -57,7 +57,7 @@ class Qualtrics(object):
 
         This function also sets self.last_error_message and self.json_response
 
-        :param Request: The name of the API call to be made (createPanel, deletePanel etc).
+        :param Request: The name of the API call to be made ("createPanel", "deletePanel" etc).
         :param kwargs: Additional parameters for this API Call (LibraryID="abd", PanelID="123")
         :return: None if request failed
         """

@@ -1,0 +1,2 @@
+* Enable sphinx documentation
+* Publish on PyPI
