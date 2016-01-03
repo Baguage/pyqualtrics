@@ -1,0 +1,14 @@
+0.1.0: Initial version
+  * createPanel
+  * deletePanel
+  * getPanelMemberCount
+  * addRecipient
+  * getRecipient
+  * removeRecipient
+  * sendSurveyToIndividual
+  * getDistributions
+  * getSurvey
+  * getLegacyResponseData
+  * getResponse
+  * importPanel
+  * importJsonPanel

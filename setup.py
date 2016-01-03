@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 # This file is part of the pyqualtrics package.
 # For copyright and licensing information about this package, see the
@@ -17,22 +18,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Use setuptools without bundling it
+# https://pythonhosted.org/setuptools/setuptools.html#using-setuptools-without-bundling-it
+# Note this means user will need network connection when running setup.py
+import ez_setup
+ez_setup.use_setuptools()
 
 from setuptools import setup, find_packages
 
 setup(
     name="pyqualtrics",
-    version="0.0.1",
+    version="0.1.0",
     author="Alex Vyushkov",
     author_email="pyqualtrics@gmail.com",
     description="Unofficial python SDK for Qualtrics API",
     license="Apache License 2.0",
-    keywords="API Qualtrics Survey",
+    keywords="API Qualtrics Survey SDK Social Science Psychology",
     url="https://github.com/Baguage/pyqualtrics",
     # find_packages() takes a source directory and two lists of package name patterns to exclude and include.
     # If omitted, the source directory defaults to the same directory as the setup script.
     packages=find_packages(),  # https://pythonhosted.org/setuptools/setuptools.html#using-find-packages
     install_requires=["requests"],
+    test_suite="pyqualtrics.tests",
     classifiers=[
         "Development Status :: 3 - Alpha",
         "License :: OSI Approved :: Apache Software License",

@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+#
 # This file is part of the pyqualtrics package.
 # For copyright and licensing information about this package, see the
 # NOTICE.txt and LICENSE.txt files in its top-level directory; they are
@@ -51,13 +53,23 @@ class Qualtrics(object):
         self.last_url = None
         self.json_response = None
 
+    def __str__(self):
+        return self.user
+
+    def __repr__(self):
+        # Used code snippet from stackoverflow
+        # http://stackoverflow.com/questions/1436703/difference-between-str-and-repr-in-python
+        # Note this will print Qualtrics token - may be dangerous for logging
+        return "%s(%r)" % (self.__class__, self.__dict__)
+
     def request(self, Request, post_data=None, **kwargs):
-        """ Send GET request to Qualtrics API
+        """ Send GET or POST request to Qualtrics API
         https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#overview_2.5
 
         This function also sets self.last_error_message and self.json_response
 
         :param Request: The name of the API call to be made ("createPanel", "deletePanel" etc).
+        :param post_data: Content of POST request. If None, GET request will be sent
         :param kwargs: Additional parameters for this API Call (LibraryID="abd", PanelID="123")
         :return: None if request failed
         """

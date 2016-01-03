@@ -1,6 +1,16 @@
-# PyQualtrics
+[![Downloads](https://img.shields.io/pypi/dw/vecnet.openmalaria.svg)](https://pypi.python.org/pypi/pyqualtrics)
+[![Version](https://img.shields.io/pypi/v/vecnet.openmalaria.svg)](https://pypi.python.org/pypi/pyqualtrics)
+[![License](https://img.shields.io/pypi/l/vecnet.openmalaria.svg)](https://pypi.python.org/pypi/pyqualtrics)
+[![Python](https://img.shields.io/pypi/pyversions/vecnet.openmalaria.svg)](https://pypi.python.org/pypi/pyqualtrics)
+
+PyQualtrics
+=====
 
 Unofficial python SDK for Qualtrics API
+
+# System requirements
+
+Python 2.7 only
 
 # Installation
 
@@ -9,8 +19,6 @@ Install using pip:
 `pip install pyqualtrics`
 
 Alternatively, you can download or clone this repo and call `pip install -e ..`
-
-# How to run tests
 
 # Usage example
 
@@ -21,6 +29,8 @@ Please refer to http://www.qualtrics.com/university/researchsuite/developer-tool
 for information on how to get your API TOKEN and Qualtrics IDs.
 
 ```python
+from qualtrics import Qualtrics
+
 qualtrics = Qualtrics(QUALTRICS_USER, QUALTRICS_TOKEN)
 responses = qualtrics.getLegacyResponseData(SurveyID=QUALTRICS_SURVEY_ID)
 for response_id, response in response.itemitem():
@@ -29,7 +39,11 @@ for response_id, response in response.itemitem():
 
 # Documentation
 
-Full documenation is available on wiki.
+Full documenation is not yet available.
+
+# How to run tests
+
+...
 
 # Bugs and requests
 
@@ -40,6 +54,10 @@ https://github.com/Baguage/pyqualtrics/issues
 # License
 
 You can use this under Apache 2.0. See LICENSE.txt file for details.
+
+# Author
+
+Alex Vyushkov, pyqualtrics[at]gmail.com
 
 # Misc
 
