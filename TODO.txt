@@ -1,4 +1,3 @@
-* Write test for importJsonPanel function
 * Write tests for failing sendSurveyToIndividual, getDistributions,
 addRecipient, getRecipient and getPanelMemberCount functions
 * Write "how to run tests" document

@@ -39,6 +39,7 @@ setup(
     # If omitted, the source directory defaults to the same directory as the setup script.
     packages=find_packages(),  # https://pythonhosted.org/setuptools/setuptools.html#using-find-packages
     install_requires=["requests"],
+    scripts=['bin/qualtrics.cmd', 'bin/qualtrics'],
     test_suite="pyqualtrics.tests",
     classifiers=[
         "Development Status :: 3 - Alpha",
