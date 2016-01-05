@@ -1,4 +1,4 @@
-0.1.0: Initial version
+0.1.0: 01/03/2016 - Initial version
   * createPanel
   * deletePanel
   * getPanelMemberCount

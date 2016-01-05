@@ -301,9 +301,23 @@ class Qualtrics(object):
 
         :param LibraryID:
         :param Name:
-        :param CSV:
+        :param CSV: contents of CSV file to be imported
         :return:
         """
+
+        if kwargs.get("ColumnHeaders", None) == "1" or kwargs.get("ColumnHeaders", None) == 1:
+            fp = StringIO(CSV)
+            headers = csv.reader(fp).next()
+            if "Email" in headers and "Email" not in kwargs:
+                kwargs["Email"] = headers.index("Email") + 1
+            if "FirstName" in headers and "FirstName" not in kwargs:
+                kwargs["FirstName"] = headers.index("FirstName") + 1
+            if "LastName" in headers and "LastName" not in kwargs:
+                kwargs["LastName"] = headers.index("LastName") + 1
+            if "ExternalRef" in headers and "ExternalRef" not in kwargs:
+                kwargs["ExternalRef"] = headers.index("ExternalRef") + 1
+            fp.close()
+
         result = self.request("importPanel", post_data=CSV, LibraryID=LibraryID, Name=Name, **kwargs)
         return result["Result"]["PanelID"]
 
@@ -334,9 +348,5 @@ class Qualtrics(object):
                                 Name=Name,
                                 CSV=CSV,
                                 ColumnHeaders="1",
-                                Email=headers.index("Email") + 1,
-                                FirstName=headers.index("FirstName") + 1,
-                                LastName=headers.index("LastName") + 1,
-                                ExternalRef=headers.index("ExternalRef") + 1,
                                 **kwargs
                                 )
