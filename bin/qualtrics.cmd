@@ -1,1 +1,1 @@
-python -m qualtrics %*
+python -m pyqualtrics %*
