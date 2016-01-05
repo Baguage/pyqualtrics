@@ -160,5 +160,62 @@ class TestQualtrics(unittest.TestCase):
         self.assertEqual(self.qualtrics.last_error_message,
                          "Invalid request. Missing or invalid parameter LibraryID.")
 
+    def test_json_import(self):
+        panel_id = self.qualtrics.importJsonPanel(
+            self.library_id,
+            Name="Panel for testing JSON Import",
+            panel=[
+                    {"Email": "pyqualtrics+1@gmail.com", "FirstName": "PyQualtrics", "LastName": "Library"},
+                    {"Email": "pyqualtrics+2@gmail.com", "FirstName": "PyQualtrics2", "LastName": "Library2"}
+                  ])
+        self.assertIsNotNone(panel_id)
+        self.assertIsNotNone(self.qualtrics.json_response)
+        self.assertIsNone(self.qualtrics.last_error_message)
+
+        count = self.qualtrics.getPanelMemberCount(self.library_id, panel_id)
+        self.assertEqual(count, 2)
+        self.assertIsNone(self.qualtrics.last_error_message)
+        self.assertIsNotNone(self.qualtrics.json_response)
+
+        new_panel_id = self.qualtrics.importJsonPanel(
+            self.library_id,
+            Name="Panel for testing JSON Import",
+            PanelID=panel_id,
+            panel=[
+                    {"Email": "pyqualtrics+3@gmail.com", "FirstName": "PyQualtrics", "LastName": "Library3"},
+                    {"Email": "pyqualtrics+4@gmail.com", "FirstName": "PyQualtrics2", "LastName": "Library4"}
+                  ])
+
+        count = self.qualtrics.getPanelMemberCount(self.library_id, panel_id)
+        self.assertEqual(count, 4)
+        self.assertEqual(new_panel_id, panel_id)
+        self.assertIsNone(self.qualtrics.last_error_message)
+        self.assertIsNotNone(self.qualtrics.json_response)
+
+        # This one should not be successful
+        result = self.qualtrics.importJsonPanel(
+            self.library_id,
+            Name="Panel for testing JSON Import",
+            PanelID=panel_id,
+            headers=["FirstName", "LastName"],
+            panel=[
+                    {"FirstName": "PyQualtrics", "LastName": "Library3"},
+                    {"FirstName": "PyQualtrics2", "LastName": "Library4"}
+                  ])
+        self.assertEqual(result, None)
+        self.assertEqual(self.qualtrics.last_error_message, "Invalid request. Missing or invalid parameter Email.")
+
+        count = self.qualtrics.getPanelMemberCount(self.library_id, panel_id)
+        self.assertEqual(count, 4)
+        self.assertIsNone(self.qualtrics.last_error_message)
+        self.assertIsNotNone(self.qualtrics.json_response)
+
+        result = self.qualtrics.deletePanel(
+                             library_id=self.library_id,
+                             panel_id=panel_id)
+        self.assertEqual(result, True)
+        self.assertIsNone(self.qualtrics.last_error_message)
+        self.assertIsNotNone(self.qualtrics.json_response)
+
 if __name__ == "__main__":
     unittest.main()

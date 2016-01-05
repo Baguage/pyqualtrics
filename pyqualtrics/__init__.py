@@ -319,7 +319,9 @@ class Qualtrics(object):
             fp.close()
 
         result = self.request("importPanel", post_data=CSV, LibraryID=LibraryID, Name=Name, **kwargs)
-        return result["Result"]["PanelID"]
+        if result is not None:
+            return result["Result"]["PanelID"]
+        return None
 
     def importJsonPanel(self, LibraryID, Name, panel, headers=None, **kwargs):
         """ Import JSON document as a new panel. Example document:
