@@ -32,7 +32,11 @@ class TestQualtrics(unittest.TestCase):
         self.library_id = os.environ["QUALTRICS_LIBRARY_ID"]
         self.survey_id = os.environ.get("QUALTRICS_SURVEY_ID", None)
         self.message_id = os.environ.get("QUALTRICS_MESSAGE_ID", None)
+        self.response_id = os.environ.get("QUALTRICS_RESPONSE_ID", None)
         self.qualtrics = Qualtrics(self.user, self.token)
+
+    def test_str(self):
+        self.assertEqual(str(self.qualtrics), self.user)
 
     def test_creation_errors(self):
         panel_id = self.qualtrics.createPanel(library_id="",
@@ -68,10 +72,18 @@ class TestQualtrics(unittest.TestCase):
         count = self.qualtrics.getPanelMemberCount(self.library_id, panel_id)
         self.assertEqual(count, 0)
 
+        # random_prefix is required because you can't send same survey to the same email twice
         random_prefix = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
-        recipient_id = self.qualtrics.addRecipient(self.library_id, panel_id,
-                                    FirstName="Fake", LastName="Subject", Email="PyQualtrics+%s@gmail.com" % random_prefix,
-                                    ExternalDataRef=None, Language="EN", ED={"SubjectID": "123"})
+        recipient_id = self.qualtrics.addRecipient(
+            self.library_id,
+            panel_id,
+            FirstName="Fake",
+            LastName="Subject",
+            Email="PyQualtrics+%s@gmail.com" % random_prefix,
+            ExternalDataRef=None,
+            Language="EN",
+            ED={"SubjectID": "123"}
+        )
         self.assertIsNone(self.qualtrics.last_error_message)
         self.assertIsNotNone(recipient_id)
 
@@ -115,6 +127,15 @@ class TestQualtrics(unittest.TestCase):
             self.assertIsNotNone(data)
             self.assertIsNotNone(self.qualtrics.json_response)
             self.assertIsNone(self.qualtrics.last_error_message)
+
+        if self.response_id is not None and self.survey_id is not None:
+            response = self.qualtrics.getResponse(SurveyID=self.survey_id, ResponseID=self.response_id)
+            self.assertIsNotNone(response)
+            self.assertIsNone(self.qualtrics.last_error_message)
+
+            response = self.qualtrics.getResponse(SurveyID=self.survey_id, ResponseID="abc")
+            self.assertIsNone(response)
+            self.assertEqual(self.qualtrics.last_error_message, "Invalid request. Missing or invalid parameter ResponseID.")
 
         result = self.qualtrics.removeRecipient(LibraryID=self.library_id,
                                                 PanelID=panel_id,

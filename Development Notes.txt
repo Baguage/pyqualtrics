@@ -3,7 +3,8 @@ Checklist for new release
 2. Update CHANGELOG.txt
 3. Update version in setup.py
 4. Push all changes to github
-5. Make a release/tag
-6. Test installation on a different machine
-7. Run unittests on a different machine
-8. Run `setup.py sdist bdist upload` command
+5. Test installation on a different machine
+6. Run unittests on a different machine
+`python setup.py test`
+7. Make a release/tag
+8. Run `setup.py sdist bdist_egg bdist_wininst upload` command
