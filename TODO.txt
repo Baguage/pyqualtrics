@@ -1,3 +1,4 @@
+* Release v0.2.0
 * Write tests for failing sendSurveyToIndividual, getDistributions,
 addRecipient, getRecipient and getPanelMemberCount functions
 * Write "how to run tests" document

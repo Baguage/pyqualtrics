@@ -1,0 +1,9 @@
+Checklist for new release
+1. Run unittests
+2. Update CHANGELOG.txt
+3. Update version in setup.py
+4. Push all changes to github
+5. Make a release/tag
+6. Test installation on a different machine
+7. Run unittests on a different machine
+8. Run `setup.py sdist bdist upload` command

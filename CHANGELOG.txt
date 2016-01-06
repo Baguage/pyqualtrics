@@ -1,3 +1,8 @@
+0.2.0 01/05/2016
+  * Improved test coverage up to 80%
+  * importPanel function now automatically computes Email, LastName, FirstName and ExternalRef parameters
+  * Added command line tool "qualtrics"
+
 0.1.0: 01/03/2016 - Initial version
   * createPanel
   * deletePanel

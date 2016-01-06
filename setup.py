@@ -28,7 +28,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="pyqualtrics",
-    version="0.2.0a",
+    version="0.2.0",
     author="Alex Vyushkov",
     author_email="pyqualtrics@gmail.com",
     description="Unofficial python SDK for Qualtrics API",
@@ -37,7 +37,7 @@ setup(
     url="https://github.com/Baguage/pyqualtrics",
     # find_packages() takes a source directory and two lists of package name patterns to exclude and include.
     # If omitted, the source directory defaults to the same directory as the setup script.
-    packages=find_packages(),  # https://pythonhosted.org/setuptools/setuptools.html#using-find-packages
+    packages=find_packages(exclude=["examples"]),  # https://pythonhosted.org/setuptools/setuptools.html#using-find-packages
     install_requires=["requests"],
     scripts=['bin/qualtrics.cmd', 'bin/qualtrics'],
     test_suite="pyqualtrics.tests",
