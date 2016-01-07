@@ -39,8 +39,8 @@ class TestQualtrics(unittest.TestCase):
         self.assertEqual(str(self.qualtrics), self.user)
 
     def test_creation_errors(self):
-        panel_id = self.qualtrics.createPanel(library_id="",
-                                              name="Hello",
+        panel_id = self.qualtrics.createPanel(LibraryID="",
+                                              Name="Hello",
                                               User="deadbeaf")
         self.assertIsNone(panel_id)
         self.assertIsNotNone(self.qualtrics.last_error_message)
@@ -55,16 +55,16 @@ class TestQualtrics(unittest.TestCase):
 
         # Create panel with non-existing library id
         panel_id = self.qualtrics.createPanel(
-                                      library_id="",
-                                      name="Hello")
+                                      LibraryID="",
+                                      Name="Hello")
         self.assertIsNone(panel_id)
         self.assertEqual(self.qualtrics.last_error_message,
                          "Invalid request. Missing or invalid parameter LibraryID.")
 
     def test_create_and_delete(self):
         # Note you may need to login and logout to see new panel in Qualtrics interface
-        panel_id = self.qualtrics.createPanel(library_id=self.library_id,
-                                                      name="Test Panel created by pyqualtrics library (DELETE ME)")
+        panel_id = self.qualtrics.createPanel(LibraryID=self.library_id,
+                                                      Name="Test Panel created by pyqualtrics library (DELETE ME)")
         self.assertIsNotNone(panel_id)
         self.assertIsNone(self.qualtrics.last_error_message)
         self.assertIsNotNone(self.qualtrics.json_response)
@@ -147,8 +147,8 @@ class TestQualtrics(unittest.TestCase):
         self.assertEqual(count, 0)
 
         result = self.qualtrics.deletePanel(
-                             library_id=self.library_id,
-                             panel_id=panel_id)
+                             LibraryID=self.library_id,
+                             PanelID=panel_id)
         self.assertEqual(result, True)
         self.assertIsNone(self.qualtrics.last_error_message)
         self.assertIsNotNone(self.qualtrics.json_response)
@@ -161,8 +161,8 @@ class TestQualtrics(unittest.TestCase):
         self.assertEqual(self.qualtrics.last_error_message, "Invalid request. Missing or invalid parameter RecipientID.")
 
     def test_deletion_errors(self):
-        result = self.qualtrics.deletePanel(library_id="",
-                                            panel_id="",
+        result = self.qualtrics.deletePanel(LibraryID="",
+                                            PanelID="",
                                             User="deadbeaf")
         self.assertEqual(result, False)
         self.assertIsNotNone(self.qualtrics.last_error_message)
@@ -175,8 +175,8 @@ class TestQualtrics(unittest.TestCase):
         # For example:
         #     "Too many failed login attempts. Your account has been disabled for 10 minutes."
 
-        result = self.qualtrics.deletePanel(library_id="",
-                                            panel_id="Hello")
+        result = self.qualtrics.deletePanel(LibraryID="",
+                                            PanelID="Hello")
         self.assertEqual(result, False)
         self.assertEqual(self.qualtrics.last_error_message,
                          "Invalid request. Missing or invalid parameter LibraryID.")
@@ -232,8 +232,8 @@ class TestQualtrics(unittest.TestCase):
         self.assertIsNotNone(self.qualtrics.json_response)
 
         result = self.qualtrics.deletePanel(
-                             library_id=self.library_id,
-                             panel_id=panel_id)
+                             LibraryID=self.library_id,
+                             PanelID=panel_id)
         self.assertEqual(result, True)
         self.assertIsNone(self.qualtrics.last_error_message)
         self.assertIsNotNone(self.qualtrics.json_response)

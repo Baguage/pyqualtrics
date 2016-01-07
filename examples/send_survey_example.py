@@ -36,8 +36,8 @@ if __name__ == "__main__":
     message_id = os.environ["QUALTRICS_MESSAGE_ID"]
 
     panel_id = qualtrics.createPanel(
-        library_id=library_id,
-        name="Test Panel created by pyqualtrics example (DELETE ME)"
+        LibraryID=library_id,
+        Name="Test Panel created by pyqualtrics example (DELETE ME)"
     )
 
     if panel_id is None:
@@ -78,8 +78,8 @@ if __name__ == "__main__":
         print "Error sending email: %s" % qualtrics.last_error_message
 
     result = qualtrics.deletePanel(
-         library_id=library_id,
-         panel_id=panel_id
+         LibraryID=library_id,
+         PanelID=panel_id
     )
 
     if not result:

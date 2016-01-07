@@ -139,39 +139,39 @@ class Qualtrics(object):
         self.last_error_message = json_response["Meta"]["ErrorMessage"]
         return None
 
-    def createPanel(self, library_id, name, **kwargs):
+    def createPanel(self, LibraryID, Name, **kwargs):
         """ Creates a new Panel in the Qualtrics System and returns the id of the new panel
         https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#createPanel_2.5
 
-        :param library_id: 	The library id you want to create the panel in
-        :param name: The name of the new panel
+        :param LibraryID: 	The library id you want to create the panel in
+        :param Name: The name of the new panel
         :return: PanelID of new panel, None if error occurs
         """
-        if self.request("createPanel", LibraryID=library_id, Name=name, **kwargs) is None:
+        if self.request("createPanel", LibraryID=LibraryID, Name=Name, **kwargs) is None:
             return None
         return self.json_response["Result"]["PanelID"]
 
-    def deletePanel(self, library_id, panel_id, **kwargs):
+    def deletePanel(self, LibraryID, PanelID, **kwargs):
         """ Deletes the panel.
         https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#deletePanel_2.5
 
-        :param library_id: The library id the panel is in.
-        :param panel_id: The panel id that will be deleted.
+        :param LibraryID: The library id the panel is in.
+        :param PanelID: The panel id that will be deleted.
         :return: True if deletion was successful, False otherwise
         """
-        if self.request("deletePanel", LibraryID=library_id, PanelID=panel_id, **kwargs) is None:
+        if self.request("deletePanel", LibraryID=LibraryID, PanelID=PanelID, **kwargs) is None:
             return False
         return True
 
-    def getPanelMemberCount(self, library_id, panel_id, **kwargs):
+    def getPanelMemberCount(self, LibraryID, PanelID, **kwargs):
         """ Gets the number of panel members
         https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#getPanelMemberCount_2.5
-        :param library_id: The library ID where this panel belongs
-        :param panel_id: The panel ID
+        :param LibraryID: The library ID where this panel belongs
+        :param PanelID: The panel ID
         :param kwargs: Additional parameters (used by unittest)
         :return: The Number of members
         """
-        if self.request("getPanelMemberCount", LibraryID=library_id, PanelID=panel_id, **kwargs) is None:
+        if self.request("getPanelMemberCount", LibraryID=LibraryID, PanelID=PanelID, **kwargs) is None:
             return None
         return int(self.json_response["Result"]["Count"])
 
