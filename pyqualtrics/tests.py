@@ -25,6 +25,7 @@ from pyqualtrics import Qualtrics
 import unittest
 import os
 
+
 class TestQualtrics(unittest.TestCase):
     def setUp(self):
         self.user = os.environ["QUALTRICS_USER"]
@@ -63,8 +64,10 @@ class TestQualtrics(unittest.TestCase):
 
     def test_create_and_delete(self):
         # Note you may need to login and logout to see new panel in Qualtrics interface
-        panel_id = self.qualtrics.createPanel(LibraryID=self.library_id,
-                                                      Name="Test Panel created by pyqualtrics library (DELETE ME)")
+        panel_id = self.qualtrics.createPanel(
+            LibraryID=self.library_id,
+            Name="Test Panel created by pyqualtrics library (DELETE ME)"
+        )
         self.assertIsNotNone(panel_id)
         self.assertIsNone(self.qualtrics.last_error_message)
         self.assertIsNotNone(self.qualtrics.json_response)
@@ -135,7 +138,7 @@ class TestQualtrics(unittest.TestCase):
 
             response = self.qualtrics.getResponse(SurveyID=self.survey_id, ResponseID="abc")
             self.assertIsNone(response)
-            self.assertEqual(self.qualtrics.last_error_message, "Invalid request. Missing or invalid parameter ResponseID.")
+            self.assertEqual(self.qualtrics.last_error_message, "Invalid request. Missing or invalid parameter ResponseID.")  # noqa
 
         result = self.qualtrics.removeRecipient(LibraryID=self.library_id,
                                                 PanelID=panel_id,
@@ -158,7 +161,10 @@ class TestQualtrics(unittest.TestCase):
                                                 PanelID="",
                                                 RecipientID="")
         self.assertEqual(result, False)
-        self.assertEqual(self.qualtrics.last_error_message, "Invalid request. Missing or invalid parameter RecipientID.")
+        self.assertEqual(
+            self.qualtrics.last_error_message,
+            "Invalid request. Missing or invalid parameter RecipientID."
+        )
 
     def test_deletion_errors(self):
         result = self.qualtrics.deletePanel(LibraryID="",
@@ -228,6 +234,32 @@ class TestQualtrics(unittest.TestCase):
 
         count = self.qualtrics.getPanelMemberCount(self.library_id, panel_id)
         self.assertEqual(count, 4)
+        self.assertIsNone(self.qualtrics.last_error_message)
+        self.assertIsNotNone(self.qualtrics.json_response)
+
+        result = self.qualtrics.deletePanel(
+                             LibraryID=self.library_id,
+                             PanelID=panel_id)
+        self.assertEqual(result, True)
+        self.assertIsNone(self.qualtrics.last_error_message)
+        self.assertIsNotNone(self.qualtrics.json_response)
+
+    def test_json_import_with_embedded_data(self):
+        panel_id = self.qualtrics.importJsonPanel(
+            self.library_id,
+            Name="Panel for testing JSON Import",
+            panel=[
+                    {"Email": "pyqualtrics+1@gmail.com", "FirstName": "PyQualtrics", "LastName": "Library", "SubjectID":"SUBJ0001"},  # noqa
+                    {"Email": "pyqualtrics+2@gmail.com", "FirstName": "PyQualtrics2", "LastName": "Library2"}
+                  ],
+            headers=["Email", "FirstName", "LastName", "ExternalRef", "SubjectID"],
+            AllED=1)
+        self.assertIsNotNone(panel_id)
+        self.assertIsNotNone(self.qualtrics.json_response)
+        self.assertIsNone(self.qualtrics.last_error_message)
+
+        count = self.qualtrics.getPanelMemberCount(self.library_id, panel_id)
+        self.assertEqual(count, 2)
         self.assertIsNone(self.qualtrics.last_error_message)
         self.assertIsNotNone(self.qualtrics.json_response)
 
