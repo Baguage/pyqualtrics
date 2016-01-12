@@ -46,7 +46,19 @@ Full documenation is not yet available.
 
 # How to run tests
 
-...
+Tests suite requires access to Qualtrics API. It uses following environment variables
+
+QUALTRICS_USER	- Qualtrics User ID
+
+QUALTRICS_TOKEN	- Token to access Qualtrics API
+
+QUALTRICS_LIBRARY_ID - Library ID
+
+If either of these variables is not define, tests won't start at all.
+
+If you want to run full test suite, you may want to create a survey, a message and one response in your Qualtrics account.
+QUALTRICS_SURVEY_ID, QUALTRICS_RESPONSE_ID and QUALTRICS_MESSAGE_ID variable should be set to activate those tests
+
 
 # Bugs and requests
 
