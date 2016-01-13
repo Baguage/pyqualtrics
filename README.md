@@ -54,7 +54,9 @@ QUALTRICS_TOKEN	- Token to access Qualtrics API
 
 QUALTRICS_LIBRARY_ID - Library ID
 
-If either of these variables is not define, tests won't start at all.
+Please refer to https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#authentication_2.5 for additional information
+on how to get your API Token. Library ID can be found in the 'Qualtrics IDs' section.
+If either of these variables is not defined, tests won't start at all.
 
 If you want to run full test suite, you may want to create a survey, a message and one response in your Qualtrics account.
 QUALTRICS_SURVEY_ID, QUALTRICS_RESPONSE_ID and QUALTRICS_MESSAGE_ID variable should be set to activate those tests
