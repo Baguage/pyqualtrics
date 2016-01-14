@@ -8,6 +8,12 @@ PyQualtrics
 
 Unofficial python SDK for Qualtrics API
 
+# API Documentation
+
+The Qualtrics REST API allows you to query our system using a simple URL syntax. All requests are simple GET or POST requests that return XML or JSON. 
+Official API documenation is available on https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php
+This library uses API v2.5
+
 # System requirements
 
 Python 2.7 only. Requires setuptools. 
@@ -15,7 +21,7 @@ Run `python ez_setup.py` command if you do not have setuptools installed in your
 
 # Installation
 
-Install using pip:
+Install the latest release using pip:
 
 `pip install pyqualtrics`
 
@@ -30,6 +36,9 @@ Access is available for your account.
 
 Please refer to http://www.qualtrics.com/university/researchsuite/developer-tools/api-integration/qualtrics-rest-api/ 
 for information on how to get your API Token and other Qualtrics IDs.
+
+This is how you get get list of all responses to a survey. A python dictionary is returned by getLegacyResponseData
+function
 
 ```python
 from pyqualtrics import Qualtrics
@@ -56,7 +65,7 @@ QUALTRICS_LIBRARY_ID - Library ID
 
 Please refer to https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#authentication_2.5 for additional information
 on how to get your API Token. Library ID can be found in the 'Qualtrics IDs' section.
-If either of these variables is not defined, tests won't start at all.
+If one of these variables is not defined, tests won't start at all.
 
 If you want to run full test suite, you may want to create a survey, a message and one response in your Qualtrics account.
 QUALTRICS_SURVEY_ID, QUALTRICS_RESPONSE_ID and QUALTRICS_MESSAGE_ID variable should be set to activate those tests
