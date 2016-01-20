@@ -117,8 +117,8 @@ class Qualtrics(object):
 
         self.json_response = json_response
         # Sanity check.
-        if Request == "getLegacyResponseData" and "Meta" not in json_response:
-            # Special case - getLegacyResponseData
+        if (Request == "getLegacyResponseData" or Request == "getPanel") and "Meta" not in json_response:
+            # Special cases - getLegacyResponseData and getPanel
             # Success
             return json_response
         if "Meta" not in json_response:
@@ -290,6 +290,33 @@ class Qualtrics(object):
             self.last_error_message = "Qualtrics error: ResponseID %s not in response" % ResponseID
             return None
         return response[ResponseID]
+
+    def getPanel(self, LibraryID, PanelID, EmbeddedData=None, LastRecipientID=None, NumberOfRecords=None,
+                 ExportLanguage=None, Unsubscribed=None, Subscribed=None, **kwargs):
+        """ Gets all the panel members for the given panel
+        https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#getPanel_2.5
+        :param LibraryID: The library id for this panel
+        :param PanelID:  	The panel id you want to export
+        :param EmbeddedData: A comma separated list of the embedded data keys you want to export. This is only required for a CSV export.
+        :param LastRecipientID: The last Recipient ID from a previous API call. Start returning everyone AFTER this Recipient
+        :param NumberOfRecords: 	The number of panel members to return. If not defined will return all of them
+        :param ExportLanguage: 	If 1 the language of each panel member will be exported.
+        :param Unsubscribed: If 1 only the unsubscribed panel members will be returned
+        :param Subscribed:	If 1 then only subscribed panel members will be returned
+        :return: list of panel member as dictionaries
+        """
+        if not self.request("getPanel",
+                            LibraryID=LibraryID,
+                            PanelID=PanelID,
+                            EmbeddedData=EmbeddedData,
+                            LastRecipientID=LastRecipientID,
+                            NumberOfRecords=NumberOfRecords,
+                            ExportLanguage=ExportLanguage,
+                            Unsubscribed=Unsubscribed,
+                            Subscribed=Subscribed,
+                            **kwargs):
+            return None
+        return self.json_response
 
     def importPanel(self, LibraryID, Name, CSV, **kwargs):
         """ Imports a csv file as a new panel (optionally it can append to a previously made panel) into the database

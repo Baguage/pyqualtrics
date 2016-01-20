@@ -204,6 +204,12 @@ class TestQualtrics(unittest.TestCase):
         self.assertIsNone(self.qualtrics.last_error_message)
         self.assertIsNotNone(self.qualtrics.json_response)
 
+        subjects = self.qualtrics.getPanel(self.library_id, panel_id)
+        self.assertEqual(len(subjects), 2)
+        self.assertEqual(subjects[0]["LastName"], "Library")
+        self.assertEqual(subjects[1]["FirstName"], "PyQualtrics2")
+
+
         new_panel_id = self.qualtrics.importJsonPanel(
             self.library_id,
             Name="Panel for testing JSON Import",
