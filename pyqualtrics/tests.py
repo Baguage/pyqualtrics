@@ -255,7 +255,7 @@ class TestQualtrics(unittest.TestCase):
             self.library_id,
             Name="Panel for testing JSON Import",
             panel=[
-                    {"Email": "pyqualtrics+1@gmail.com", "FirstName": "PyQualtrics", "LastName": "Library", "SubjectID":"SUBJ0001"},  # noqa
+                    {"Email": "pyqualtrics+1@gmail.com", "FirstName": "PyQualtrics", "LastName": "Library", "SubjectID": "SUBJ0001"},  # noqa
                     {"Email": "pyqualtrics+2@gmail.com", "FirstName": "PyQualtrics2", "LastName": "Library2"}
                   ],
             headers=["Email", "FirstName", "LastName", "ExternalRef", "SubjectID"],
@@ -268,6 +268,12 @@ class TestQualtrics(unittest.TestCase):
         self.assertEqual(count, 2)
         self.assertIsNone(self.qualtrics.last_error_message)
         self.assertIsNotNone(self.qualtrics.json_response)
+
+        subjects = self.qualtrics.getPanel(self.library_id, panel_id)
+        self.assertEqual(len(subjects), 2)
+        self.assertEqual(subjects[0]["LastName"], "Library")
+        self.assertEqual(subjects[1]["FirstName"], "PyQualtrics2")
+        self.assertEqual(subjects[0]["EmbeddedData"]["SubjectID"], "SUBJ0001")
 
         result = self.qualtrics.deletePanel(
                              LibraryID=self.library_id,

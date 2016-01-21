@@ -1,5 +1,5 @@
 0.4.0 01/??/2016
-  *
+  * getPanel function
 
 0.3.0 01/14/2016
   * Renamed parameters for consistency: library_id to LibraryID, panel_id to PanelID, name to Name
