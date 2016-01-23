@@ -282,5 +282,42 @@ class TestQualtrics(unittest.TestCase):
         self.assertIsNone(self.qualtrics.last_error_message)
         self.assertIsNotNone(self.qualtrics.json_response)
 
+    def test_import_survey_errors(self):
+        result = self.qualtrics.importSurvey(
+                ImportFormat="QSF",
+                Name="Test survey import (DELETE ME)",
+                FileContents="123"
+        )
+        self.assertEqual(self.qualtrics.last_error_message, "Error parsing file: The file does not appear to be a valid survey")
+
+        result = self.qualtrics.importSurvey(
+                ImportFormat="_",
+                Name="Test survey import (DELETE ME)",
+                FileContents="123"
+        )
+        self.assertEqual(self.qualtrics.last_error_message, "Invalid request. Missing or invalid parameter ImportFormat.")
+
+    def test_import_survey(self):
+        survey_id = self.qualtrics.importSurvey(
+                ImportFormat="QSF",
+                Name="Test survey import (DELETE ME)",
+                FileContents=open("d:\Downloads\Daily_Life_End_of_the_Day_Reconstruction (2).qsf").read()
+        )
+        self.assertIsNotNone(survey_id)
+        self.assertIsNone(self.qualtrics.last_error_message)
+
+        self.assertTrue(self.qualtrics.deleteSurvey(SurveyID=survey_id))
+        self.assertIsNone(self.qualtrics.last_error_message)
+        print self.qualtrics.json_response
+        print self.qualtrics.last_url
+
+        # result = self.qualtrics.getSurvey(survey_id)
+
+        self.assertTrue(self.qualtrics.deleteSurvey(SurveyID=survey_id))
+        #print result
+
+    def test_delete_survey_fails(self):
+        self.assertFalse(self.qualtrics.deleteSurvey(SurveyID="123"))
+
 if __name__ == "__main__":
     unittest.main()

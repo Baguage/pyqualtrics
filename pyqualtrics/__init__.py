@@ -62,7 +62,7 @@ class Qualtrics(object):
         # Note this will print Qualtrics token - may be dangerous for logging
         return "%s(%r)" % (self.__class__, self.__dict__)
 
-    def request(self, Request, post_data=None, **kwargs):
+    def request(self, Request, post_data=None, post_files=None, **kwargs):
         """ Send GET or POST request to Qualtrics API
         https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#overview_2.5
 
@@ -97,6 +97,10 @@ class Qualtrics(object):
         if post_data:
             r = requests.post(self.url,
                               data=post_data,
+                              params=params)
+        elif post_files:
+            r = requests.post(self.url,
+                              files=post_files,
                               params=params)
         else:
             r = requests.get(self.url,
@@ -257,6 +261,43 @@ class Qualtrics(object):
         # Good luck dealing with XML
         # Response does not include answers though
         return self.request("getSurvey", SurveyID=SurveyID, Format=None)
+
+    def importSurvey(self, ImportFormat, Name, Activate=None, URL=None, FileContents=None, OwnerID=None, **kwargs):
+        """
+        Import Survey https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#importSurvey_2.5
+        :param ImportFormat:
+        :param Name:
+        :param Activate:
+        :param URL:
+        :param FileContents:
+        :param OwnerID:
+        :return:
+        """
+        result = self.request(
+            "importSurvey",
+             ImportFormat=ImportFormat,
+             Name=Name,
+             Activate=Activate,
+             URL=URL,
+             OwnerID=OwnerID,
+             post_files={"FileContents": FileContents},
+             **kwargs
+        )
+        if result is not None:
+            return result["Result"]["SurveyID"]
+
+    def deleteSurvey(self, SurveyID, **kwargs):
+        """
+        Delete the specified survey
+        https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#deleteSurvey_2.5
+
+        :param SurveyID: ID of the survey
+        :param kwargs: Additional parameters for API
+        :return:
+        """
+        if self.request("deleteSurvey", SurveyID=SurveyID) is not None:
+            return True
+        return False
 
     def getLegacyResponseData(self, SurveyID, **kwargs):
         """ Returns all of the response data for a survey in the original (legacy) data format.
