@@ -20,6 +20,8 @@
 import csv
 import json
 from StringIO import StringIO
+from collections import OrderedDict
+
 import requests
 import os
 
@@ -256,6 +258,23 @@ class Qualtrics(object):
         if not self.request("getDistributions", **kwargs):
             return None
         return self.json_response
+
+    def getSurveys(self, **kwargs):
+        """
+        This request returns a list of all the surveys for the user.
+        https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#getSurveys_2.5
+        :param kwargs: Additional parameters to API call
+        :return: ordered dictionary of surveys. {survey_id:metadata}
+        :rtype dict:
+        """
+        response = self.request("getSurveys", **kwargs)
+        # print response
+        surveys = None
+        if response:
+            surveys = OrderedDict()
+            for survey in response["Result"]["Surveys"]:
+                surveys[survey['SurveyID']] = survey
+        return surveys
 
     def getSurvey(self, SurveyID):
         # Good luck dealing with XML

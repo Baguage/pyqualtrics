@@ -26,6 +26,8 @@ import unittest
 import os
 
 
+base_dir = os.path.dirname(os.path.abspath(__file__))
+
 class TestQualtrics(unittest.TestCase):
     def setUp(self):
         self.user = os.environ["QUALTRICS_USER"]
@@ -209,7 +211,6 @@ class TestQualtrics(unittest.TestCase):
         self.assertEqual(subjects[0]["LastName"], "Library")
         self.assertEqual(subjects[1]["FirstName"], "PyQualtrics2")
 
-
         new_panel_id = self.qualtrics.importJsonPanel(
             self.library_id,
             Name="Panel for testing JSON Import",
@@ -283,16 +284,19 @@ class TestQualtrics(unittest.TestCase):
         self.assertIsNotNone(self.qualtrics.json_response)
 
     def test_import_survey_errors(self):
+
+        # Survey contents is invalid
         result = self.qualtrics.importSurvey(
                 ImportFormat="QSF",
-                Name="Test survey import (DELETE ME)",
+                Name="Test survey import (DELETE ME - 1)",
                 FileContents="123"
         )
         self.assertEqual(self.qualtrics.last_error_message, "Error parsing file: The file does not appear to be a valid survey")
 
+        # Unknown survey format
         result = self.qualtrics.importSurvey(
                 ImportFormat="_",
-                Name="Test survey import (DELETE ME)",
+                Name="Test survey import (DELETE ME - 2)",
                 FileContents="123"
         )
         self.assertEqual(self.qualtrics.last_error_message, "Invalid request. Missing or invalid parameter ImportFormat.")
@@ -300,24 +304,29 @@ class TestQualtrics(unittest.TestCase):
     def test_import_survey(self):
         survey_id = self.qualtrics.importSurvey(
                 ImportFormat="QSF",
-                Name="Test survey import (DELETE ME)",
-                FileContents=open("d:\Downloads\Daily_Life_End_of_the_Day_Reconstruction (2).qsf").read()
+                Name="Test survey import (DELETE ME - 3)",
+                FileContents=open(os.path.join(base_dir, "survey.qsf")).read()
         )
         self.assertIsNotNone(survey_id)
         self.assertIsNone(self.qualtrics.last_error_message)
 
-        self.assertTrue(self.qualtrics.deleteSurvey(SurveyID=survey_id))
+        self.assertIn(survey_id, self.qualtrics.getSurveys())
         self.assertIsNone(self.qualtrics.last_error_message)
-        print self.qualtrics.json_response
-        print self.qualtrics.last_url
-
-        # result = self.qualtrics.getSurvey(survey_id)
 
         self.assertTrue(self.qualtrics.deleteSurvey(SurveyID=survey_id))
-        #print result
 
     def test_delete_survey_fails(self):
         self.assertFalse(self.qualtrics.deleteSurvey(SurveyID="123"))
+
+    def tearDown(self):
+        # Note that tearDown is called after EACH test
+
+        # Remove all surveys with (DELETE ME in their name
+        for survey_id, survey in self.qualtrics.getSurveys().iteritems():
+            if "(DELETE ME" in survey["SurveyName"]:
+                print "Deleting survey %s" % survey["SurveyName"]
+                self.qualtrics.deleteSurvey(SurveyID=survey_id)
+        pass
 
 if __name__ == "__main__":
     unittest.main()
