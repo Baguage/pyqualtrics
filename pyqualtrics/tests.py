@@ -313,10 +313,21 @@ class TestQualtrics(unittest.TestCase):
         self.assertIn(survey_id, self.qualtrics.getSurveys())
         self.assertIsNone(self.qualtrics.last_error_message)
 
-        self.assertTrue(self.qualtrics.deleteSurvey(SurveyID=survey_id))
+        result = self.qualtrics.activateSurvey(SurveyID=survey_id)
+        self.assertTrue(result)
+
+        result = self.qualtrics.deactivateSurvey(SurveyID=survey_id)
+        self.assertTrue(result)
+
+        result = self.qualtrics.deleteSurvey(SurveyID=survey_id)
+        self.assertTrue(result)
 
     def test_delete_survey_fails(self):
         self.assertFalse(self.qualtrics.deleteSurvey(SurveyID="123"))
+
+    def test_activate_survey_fails(self):
+        self.assertFalse(self.qualtrics.activateSurvey(SurveyID="123"))
+        self.assertFalse(self.qualtrics.deactivateSurvey(SurveyID="123"))
 
     def tearDown(self):
         # Note that tearDown is called after EACH test

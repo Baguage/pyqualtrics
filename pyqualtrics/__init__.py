@@ -318,6 +318,26 @@ class Qualtrics(object):
             return True
         return False
 
+    def activateSurvey(self, SurveyID, **kwargs):
+        """ Activates the specified Survey
+        https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#activateSurvey_2.5
+        :param SurveyID: The Survey ID to activate
+        :return:
+        """
+        if self.request("activateSurvey", SurveyID=SurveyID, **kwargs):
+            return True
+        return False
+
+    def deactivateSurvey(self, SurveyID, **kwargs):
+        """ Deactivates the specified Survey
+        https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#deactivateSurvey_2.5
+        :param SurveyID: The Survey ID to deactivate
+        :return:
+        """
+        if self.request("deactivateSurvey", SurveyID=SurveyID, **kwargs):
+            return True
+        return False
+
     def getLegacyResponseData(self, SurveyID, **kwargs):
         """ Returns all of the response data for a survey in the original (legacy) data format.
         https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#getLegacyResponseData_2.5
