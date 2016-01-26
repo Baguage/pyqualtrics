@@ -322,6 +322,21 @@ class TestQualtrics(unittest.TestCase):
         result = self.qualtrics.deleteSurvey(SurveyID=survey_id)
         self.assertTrue(result)
 
+    def test_import_survey_from_url(self):
+        survey_id = self.qualtrics.importSurvey(
+                ImportFormat="QSF",
+                Name="Test survey import (DELETE ME - curatend)",
+                URL="https://curate.nd.edu/downloads/xs55m903893"
+        )
+        self.assertIsNotNone(survey_id)
+        self.assertIsNone(self.qualtrics.last_error_message)
+
+        self.assertIn(survey_id, self.qualtrics.getSurveys())
+        self.assertIsNone(self.qualtrics.last_error_message)
+
+        result = self.qualtrics.deleteSurvey(SurveyID=survey_id)
+        self.assertTrue(result)
+
     def test_delete_survey_fails(self):
         self.assertFalse(self.qualtrics.deleteSurvey(SurveyID="123"))
 

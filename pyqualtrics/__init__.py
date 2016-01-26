@@ -72,6 +72,7 @@ class Qualtrics(object):
 
         :param Request: The name of the API call to be made ("createPanel", "deletePanel" etc).
         :param post_data: Content of POST request. If None, GET request will be sent
+        :param post_files: Files to post (for importSurvey API call)
         :param kwargs: Additional parameters for this API Call (LibraryID="abd", PanelID="123")
         :return: None if request failed
         """
@@ -299,7 +300,7 @@ class Qualtrics(object):
              Activate=Activate,
              URL=URL,
              OwnerID=OwnerID,
-             post_files={"FileContents": FileContents},
+             post_files={"FileContents": FileContents} if FileContents else None,
              **kwargs
         )
         if result is not None:
