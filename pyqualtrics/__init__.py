@@ -284,7 +284,11 @@ class Qualtrics(object):
 
     def importSurvey(self, ImportFormat, Name, Activate=None, URL=None, FileContents=None, OwnerID=None, **kwargs):
         """
-        Import Survey https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#importSurvey_2.5
+        Import Survey
+        Note if contents of survey file is not correct empty survey will be created and error message will be returned
+        If it is a problem, it is up to application to handle this situation.
+
+        https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#importSurvey_2.5
         :param ImportFormat:
         :param Name:
         :param Activate:

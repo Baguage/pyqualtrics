@@ -305,7 +305,7 @@ class TestQualtrics(unittest.TestCase):
         survey_id = self.qualtrics.importSurvey(
                 ImportFormat="QSF",
                 Name="Test survey import (DELETE ME - 3)",
-                FileContents=open(os.path.join(base_dir, "survey.qsf")).read()
+                FileContents=open(os.path.join(base_dir, "pyqualtrics.qsf")).read()
         )
         self.assertIsNotNone(survey_id)
         self.assertIsNone(self.qualtrics.last_error_message)

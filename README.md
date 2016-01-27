@@ -73,6 +73,7 @@ QUALTRICS_SURVEY_ID, QUALTRICS_RESPONSE_ID and QUALTRICS_MESSAGE_ID variable sho
 
 # Bugs and requests
 
+Qualtrics support is awesome, but this is not official Qualtrics SDK and they DO NOT support this piece of software.
 If you have found a bug or if you have a request for additional functionality, please use the issue tracker on GitHub.
 
 https://github.com/Baguage/pyqualtrics/issues
