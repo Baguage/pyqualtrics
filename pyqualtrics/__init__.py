@@ -25,6 +25,7 @@ from collections import OrderedDict
 import requests
 import os
 
+
 class Qualtrics(object):
     """
     This is representation of Qualtrics REST API
@@ -457,10 +458,10 @@ class Qualtrics(object):
         for subject in panel:
             dictwriter.writerow(subject)
 
-        CSV = fp.getvalue()
+        contents = fp.getvalue()
         return self.importPanel(LibraryID=LibraryID,
                                 Name=Name,
-                                CSV=CSV,
+                                CSV=contents,
                                 ColumnHeaders="1",
                                 **kwargs
                                 )
