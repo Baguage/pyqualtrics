@@ -55,6 +55,7 @@ class Qualtrics(object):
         self.last_error_message = None
         self.last_url = None
         self.json_response = None
+        self.response = None  # For debugging purpose
 
     def __str__(self):
         return self.user
@@ -110,6 +111,7 @@ class Qualtrics(object):
             r = requests.get(self.url,
                              params=params)
         self.last_url = r.url
+        self.response = r.text
         try:
             json_response = json.loads(r.text)
         except ValueError:

@@ -80,9 +80,11 @@ https://github.com/Baguage/pyqualtrics/issues
 
 # Error handling
 
-If API call was not successful, additional information about problem can be found in
+If API call was not successful, additional information about problem can be found in the following attributes of the Qualtrics object
 
 qualtrics.last_error_message - Human-readable error message (set to None is no error occurs)
+
+qualtrics.response - server response as a text string. May be useful for debugging if server did not return JSON response for some reason
 
 qualtrics.json_response - python dictionary, JSON response returned by the server. May be None (if response is not a JSON document) 
 
