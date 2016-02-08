@@ -40,6 +40,10 @@ setup(
     packages=find_packages(exclude=["examples"]),  # https://pythonhosted.org/setuptools/setuptools.html#using-find-packages
     install_requires=["requests"],
     scripts=['bin/qualtrics.cmd', 'bin/qualtrics'],
+    package_data = {
+        # If any package contains *.qsf or *.rst files, include them:
+        '': ['*.qsf', '*.rst'],
+    },
     test_suite="pyqualtrics.tests",
     classifiers=[
         "Development Status :: 3 - Alpha",
