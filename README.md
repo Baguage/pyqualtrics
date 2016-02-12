@@ -45,7 +45,7 @@ from pyqualtrics import Qualtrics
 
 qualtrics = Qualtrics(QUALTRICS_USER, QUALTRICS_TOKEN)
 responses = qualtrics.getLegacyResponseData(SurveyID=QUALTRICS_SURVEY_ID)
-for response_id, response in response.itemitem():
+for response_id, response in responses.itemitem():
     print response_id + " - " + response["Finished"]
 ```
 
