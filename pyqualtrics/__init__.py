@@ -449,6 +449,7 @@ class Qualtrics(object):
         :param Name:
         :param panel:
         :param kwargs:
+        :param headers:
         :return:
         """
         if headers is None:

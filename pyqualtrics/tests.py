@@ -28,6 +28,7 @@ import os
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
 
+
 class TestQualtrics(unittest.TestCase):
     def setUp(self):
         self.user = os.environ["QUALTRICS_USER"]
@@ -104,16 +105,17 @@ class TestQualtrics(unittest.TestCase):
 
         if self.survey_id is not None and self.message_id is not None:
             # Test email delivery if SurveyID and MessageID have been provided
-            distribution_id = self.qualtrics.sendSurveyToIndividual(SendDate="2015-12-12 19:48:28",
-                                                  FromEmail="noreply@qemailserver.com",
-                                                  FromName="PyQualtrics Library",
-                                                  MessageID=self.message_id,
-                                                  MessageLibraryID=self.library_id,
-                                                  Subject="Why, hello there",
-                                                  SurveyID=self.survey_id,
-                                                  PanelID=panel_id,
-                                                  PanelLibraryID=self.library_id,
-                                                  RecipientID=recipient_id)
+            distribution_id = self.qualtrics.sendSurveyToIndividual(
+                SendDate="2015-12-12 19:48:28",
+                FromEmail="noreply@qemailserver.com",
+                FromName="PyQualtrics Library",
+                MessageID=self.message_id,
+                MessageLibraryID=self.library_id,
+                Subject="Why, hello there",
+                SurveyID=self.survey_id,
+                PanelID=panel_id,
+                PanelLibraryID=self.library_id,
+                RecipientID=recipient_id)
             self.assertIsNotNone(distribution_id)
             self.assertIsNone(self.qualtrics.last_error_message)
             self.assertIsNotNone(self.qualtrics.json_response)
