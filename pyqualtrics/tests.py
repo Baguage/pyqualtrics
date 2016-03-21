@@ -346,6 +346,11 @@ class TestQualtrics(unittest.TestCase):
         self.assertFalse(self.qualtrics.activateSurvey(SurveyID="123"))
         self.assertFalse(self.qualtrics.deactivateSurvey(SurveyID="123"))
 
+    def test_single_response_html(self):
+        result = self.qualtrics.getSingleResponseHTML(SurveyID=self.survey_id, ResponseID=self.response_id)
+        self.assertTrue("DOCTYPE html PUBLIC" in result)
+        print result
+
     def tearDown(self):
         # Note that tearDown is called after EACH test
 
