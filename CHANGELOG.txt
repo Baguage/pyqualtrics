@@ -1,4 +1,4 @@
-0.4.0 01/??/2016
+0.4.0 3/25/2016
   * getPanel, importSurvey, activateSurvey, deactivateSurvey, getSingleResponseHTML functions
 
 0.3.0 01/14/2016
