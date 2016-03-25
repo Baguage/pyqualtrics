@@ -349,7 +349,6 @@ class TestQualtrics(unittest.TestCase):
     def test_single_response_html(self):
         result = self.qualtrics.getSingleResponseHTML(SurveyID=self.survey_id, ResponseID=self.response_id)
         self.assertTrue("DOCTYPE html PUBLIC" in result)
-        print result
 
     def tearDown(self):
         # Note that tearDown is called after EACH test
