@@ -348,7 +348,33 @@ class TestQualtrics(unittest.TestCase):
 
     def test_single_response_html(self):
         result = self.qualtrics.getSingleResponseHTML(SurveyID=self.survey_id, ResponseID=self.response_id)
+        self.assertIsNotNone(result)
         self.assertTrue("DOCTYPE html PUBLIC" in result)
+
+
+    def test_get_legacy_response_data(self):
+        # Get completed responses
+        responses = self.qualtrics.getLegacyResponseData(SurveyID=self.survey_id)
+        self.assertIsNotNone(responses)
+        self.assertEqual(len(responses), 1)
+
+        for response_id, response in responses.iteritems():
+            self.assertEqual(response["SubjectID"], "PY0001")
+            # Not if response was imported to Qualtrics, Finished is a string, not a number
+            self.assertEqual(response["Finished"], '1')
+            self.assertEqual(response["Q1"], 1)
+            self.assertEqual(response["Q2"], 3)
+
+        responses = self.qualtrics.getLegacyResponseData(SurveyID=self.survey_id, ResponsesInProgress=1)
+        self.assertIsNotNone(responses)
+        self.assertEqual(len(responses), 1)
+
+        for response_id, response in responses.iteritems():
+            self.assertEqual(response["SubjectID"], "")
+            self.assertEqual(response["Finished"], 0)
+            self.assertEqual(response["Q1"], 2)
+            self.assertEqual(response["Q2"], "")
+
 
     def tearDown(self):
         # Note that tearDown is called after EACH test

@@ -10,13 +10,13 @@ Unofficial python SDK for Qualtrics API
 
 # API Documentation
 
-The Qualtrics REST API allows you to query our system using a simple URL syntax. All requests are simple GET or POST requests that return XML or JSON. 
+The Qualtrics REST API allows you to query our system using a simple URL syntax. All requests are simple GET or POST requests that return XML or JSON.
 Official API documenation is available on https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php
 This library uses API v2.5
 
 # System requirements
 
-Python 2.7 only. Requires setuptools. 
+Python 2.7 only. Requires setuptools.
 Run `python ez_setup.py` command if you do not have setuptools installed in your virtual environment.
 
 # Installation
@@ -70,6 +70,7 @@ If one of these variables is not defined, tests won't start at all.
 If you want to run full test suite, you may want to create a survey, a message and one response in your Qualtrics account.
 QUALTRICS_SURVEY_ID, QUALTRICS_RESPONSE_ID and QUALTRICS_MESSAGE_ID variable should be set to activate those tests
 
+You can re-created Qualtrics survey used for testing using files in qualtrics_files_for_tests directory
 
 # Bugs and requests
 
