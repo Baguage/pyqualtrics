@@ -351,7 +351,6 @@ class TestQualtrics(unittest.TestCase):
         self.assertIsNotNone(result)
         self.assertTrue("DOCTYPE html PUBLIC" in result)
 
-
     def test_get_legacy_response_data(self):
         # Get completed responses
         responses = self.qualtrics.getLegacyResponseData(SurveyID=self.survey_id)
@@ -365,16 +364,25 @@ class TestQualtrics(unittest.TestCase):
             self.assertEqual(response["Q1"], 1)
             self.assertEqual(response["Q2"], 3)
 
+        # Note that responses in progress do not have ResponseID, they have Survey Session ID instead
+        # When response is completed, Survey Session ID is gone and new ResponseID is assigned
         responses = self.qualtrics.getLegacyResponseData(SurveyID=self.survey_id, ResponsesInProgress=1)
         self.assertIsNotNone(responses)
         self.assertEqual(len(responses), 1)
 
-        for response_id, response in responses.iteritems():
+        for survey_session_id, response in responses.iteritems():
             self.assertEqual(response["SubjectID"], "")
             self.assertEqual(response["Finished"], 0)
             self.assertEqual(response["Q1"], 2)
             self.assertEqual(response["Q2"], "")
 
+    def test_get_response(self):
+        response = self.qualtrics.getResponse(SurveyID=self.survey_id, ResponseID=self.response_id)
+        self.assertIsNotNone(response)
+        self.assertEqual(response["SubjectID"], "PY0001")
+        self.assertEqual(response["Finished"], '1')
+        self.assertEqual(response["Q1"], 1)
+        self.assertEqual(response["Q2"], 3)
 
     def tearDown(self):
         # Note that tearDown is called after EACH test
