@@ -94,7 +94,7 @@ class Qualtrics(object):
                        }.items() + kwargs.items())
 
         # Format emdedded data properly,
-        # for example ED[SubjectID]=1CLE10235&ED[Zip]=74534
+        # for example ED[SubjectID]=CLE10235&ED[Zip]=74534
         if ed is not None:
             for key in ed:
                 params["ED[%s]" % key] = ed[key]
