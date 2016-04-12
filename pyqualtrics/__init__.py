@@ -241,8 +241,14 @@ class Qualtrics(object):
         delivered in a few seconds after this function is complete)
 
         https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#sendSurveyToIndividual_2.5
+
+        Example response (success):
+        {u'Meta': {u'Status': u'Success', u'Debug': u''},
+        u'Result': {u'DistributionQueueID': u'EMD_e3F0KAIVfzIYw0R', u'EmailDistributionID': u'EMD_e3F0KAIVfzIYw0R', u'Success': True}}
+
+
         :param kwargs:
-        :return: DistributionID
+        :return: EmailDistributionID
         """
         if not self.request("sendSurveyToIndividual", **kwargs):
             return None
