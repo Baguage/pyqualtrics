@@ -106,20 +106,20 @@ Alex Vyushkov, pyqualtrics[at]gmail.com
 Example JSON document returned by getLegacyResponseData
 ```json
 {
-	u'R_syPqVCNJGCedrd7': {
-		u'Status': u'0',
-		u'StartDate': u'2015-10-2310: 59: 12',
-		u'Q1': 2,
-		u'Q2': 1,
-		u'EndDate': u'2015-10-2310: 59: 23',
-		u'Name': u'Freeborni,
-		Anopheles',
-		u'IPAddress': u'129.74.236.110',
-		u'Q3': 2,
-		u'ExternalDataReference': u'',
-		u'Finished': u'1',
-		u'EmailAddress': u'baguage+Freeborni@gmail.com',
-		u'ResponseSet': u'DefaultResponseSet'
+	"R_syPqVCNJGCedrd7": {
+		"Status": "0",
+		"StartDate": "2015-10-2310: 59: 12",
+		"Q1": 2,
+		"Q2": 1,
+		"EndDate": "2015-10-2310: 59: 23",
+		"Name": "Freeborni,
+		Anopheles",
+		"IPAddress": "129.74.236.110",
+		"Q3": 2,
+		"ExternalDataReference": "",
+		"Finished": "1",
+		"EmailAddress": "baguage+Freeborni@gmail.com",
+		"ResponseSet": "DefaultResponseSet"
 	}
 }
 ```
