@@ -254,6 +254,28 @@ class Qualtrics(object):
             return None
         return self.json_response["Result"]["EmailDistributionID"]
 
+
+    def createDistribution(self, SurveyID, PanelID, Description, PanelLibraryID, **kwargs):
+        """ Creates a distribution for survey and a panel. No emails will be sent. Distribution Links can be generated
+        later to take the survey.
+
+        https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#createDistribution_2.5
+
+        :param SurveyID:        The parent distribution you are reminding
+        :param PanelID:         The panel you want to send to
+        :param Description: 	A description for this distribution
+        :param PanelLibraryID:  The library id for the panel
+        :return: The distribution id
+        """
+        if not self.request("createDistribution",
+                            SurveyID=SurveyID,
+                            PanelID=PanelID,
+                            Description=Description,
+                            PanelLibraryID=PanelLibraryID,
+                            **kwargs):
+            return None
+        return self.json_response["Result"]["EmailDistributionID"]
+
     def getDistributions(self, **kwargs):
         """ Returns the data for the given distribution.
         https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#getDistributions_2.5

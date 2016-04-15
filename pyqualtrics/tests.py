@@ -384,6 +384,16 @@ class TestQualtrics(unittest.TestCase):
         self.assertEqual(response["Q1"], 1)
         self.assertEqual(response["Q2"], 3)
 
+    def test_create_distribution(self):
+        panel_id = self.qualtrics.createPanel(self.library_id, "(DELETE ME) Panel for testing distributions")
+        distribution_id = self.qualtrics.createDistribution(SurveyID=self.survey_id,
+                                                   PanelID=panel_id,
+                                                   Description="Test distribution",
+                                                   PanelLibraryID=self.library_id)
+        self.qualtrics.deletePanel(self.library_id, panel_id)
+        self.assertIsNotNone(distribution_id)
+        self.assertIsNone(self.qualtrics.last_error_message)
+
     def tearDown(self):
         # Note that tearDown is called after EACH test
 
