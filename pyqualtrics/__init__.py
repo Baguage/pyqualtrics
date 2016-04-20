@@ -515,3 +515,29 @@ class Qualtrics(object):
             return None
 
         return self.json_response["Result"]
+
+    def generate_unique_survey_link(self, SurveyID, LibraryID, PanelID, DistributionID, FirstName, LastName, Email, ExternalDataRef="", Language="English", EmbeddedData=None):
+        """ Generate unique survey link for a person. Based on a response from Qualtrics Support
+        :param SurveyID:
+        :param LibraryID:
+        :param PanelID:
+        :param DistributionID:
+        :param FirstName:
+        :param LastName:
+        :param Email:
+        :param ExternalDataRef: (optional, defaults to "")
+        :param Language: (optional, defaults to "English")
+        :param EmbeddedData: (optional)
+        :return:
+        """
+        assert isinstance(EmbeddedData, (dict, type(None)))
+        if EmbeddedData is None:
+            EmbeddedData = {}
+        recipient_id = self.addRecipient(LibraryID, PanelID, FirstName=FirstName, LastName=LastName, Email=Email, ExternalDataRef=ExternalDataRef, Language=Language, ED=EmbeddedData)
+        if recipient_id is None:
+            return None
+        link = DistributionID.split("_")[1] + "_" + SurveyID.split("_")[1] + "_" + recipient_id
+
+        link = "http://new.qualtrics.com/SE?Q_DL=%s" % link
+
+        return link

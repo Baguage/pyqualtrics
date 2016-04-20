@@ -406,6 +406,57 @@ class TestQualtrics(unittest.TestCase):
         self.assertIsNotNone(distribution_id)
         self.assertIsNone(self.qualtrics.last_error_message)
 
+    def test_generate_unique_survey_link(self):
+        panel_id = self.qualtrics.createPanel(self.library_id, "(DELETE ME) Panel for testing unique links")
+        distribution_id = self.qualtrics.createDistribution(SurveyID=self.survey_id,
+                                                   PanelID=panel_id,
+                                                   Description="Test distribution",
+                                                   PanelLibraryID=self.library_id)
+        link1 = self.qualtrics.generate_unique_survey_link(
+            SurveyID=self.survey_id,
+            LibraryID=self.library_id,
+            PanelID=panel_id,
+            DistributionID=distribution_id,
+            FirstName="Py",
+            LastName="Qualtrics",
+            Email="pyqualtrics@gmail.com",
+        )
+
+        self.assertIsNotNone(link1)
+        self.assertIsNone(self.qualtrics.last_error_message)
+
+        link2 = self.qualtrics.generate_unique_survey_link(
+            SurveyID=self.survey_id,
+            LibraryID=self.library_id,
+            PanelID=panel_id,
+            DistributionID=distribution_id,
+            FirstName="Py",
+            LastName="Qualtrics",
+            Email="pyqualtrics@gmail.com",
+        )
+
+        self.assertIsNotNone(link2)
+        self.assertNotEquals(link1, link2)
+        self.assertIsNone(self.qualtrics.last_error_message)
+
+        link3 = self.qualtrics.generate_unique_survey_link(
+            SurveyID=self.survey_id,
+            LibraryID=self.library_id,
+            PanelID=panel_id,
+            DistributionID=distribution_id,
+            FirstName="Py",
+            LastName="Qualtrics",
+            Email="pyqualtrics@gmail.com",
+            EmbeddedData={"SubjectID": "TEST0001"}
+        )
+        self.assertIsNotNone(link3)
+        self.assertNotEquals(link1, link3)
+        self.assertNotEquals(link2, link3)
+        self.assertIsNone(self.qualtrics.last_error_message)
+
+        self.qualtrics.deletePanel(self.library_id, panel_id)
+        self.assertIsNone(self.qualtrics.last_error_message)
+
     def tearDown(self):
         # Note that tearDown is called after EACH test
 
@@ -414,7 +465,7 @@ class TestQualtrics(unittest.TestCase):
             if "(DELETE ME" in survey["SurveyName"]:
                 print "Deleting survey %s" % survey["SurveyName"]
                 self.qualtrics.deleteSurvey(SurveyID=survey_id)
-        pass
+
 
 if __name__ == "__main__":
     unittest.main()
