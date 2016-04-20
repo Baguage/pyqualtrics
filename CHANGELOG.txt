@@ -1,7 +1,7 @@
 0.5.0
   * More tests
 
-0.4.1 4/18/2016
+0.4.1 4/20/2016
   [+] createDistribution function (for generating unique survey links)
   [+] generate_unique_survey_link function
   [*] fixed bug #17 preserve order of responses in getLegacyResponseData

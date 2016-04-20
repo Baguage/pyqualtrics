@@ -531,11 +531,23 @@ class Qualtrics(object):
         :return:
         """
         assert isinstance(EmbeddedData, (dict, type(None)))
+        assert isinstance(SurveyID, (str, unicode))
+        assert isinstance(DistributionID, (str, unicode))
+
         if EmbeddedData is None:
             EmbeddedData = {}
         recipient_id = self.addRecipient(LibraryID, PanelID, FirstName=FirstName, LastName=LastName, Email=Email, ExternalDataRef=ExternalDataRef, Language=Language, ED=EmbeddedData)
         if recipient_id is None:
+            # last_error_message is set by addRecipient function
             return None
+        if "_" not in SurveyID:
+            self.last_error_message = "Invalid SurveyID format (must be SV_xxxxxxxxxx)"
+            return None
+
+        if "_" not in DistributionID:
+            self.last_error_message = "Invalid DistributionID format (must be EMD_xxxxxxxxxx)"
+            return None
+
         link = DistributionID.split("_")[1] + "_" + SurveyID.split("_")[1] + "_" + recipient_id
 
         link = "http://new.qualtrics.com/SE?Q_DL=%s" % link

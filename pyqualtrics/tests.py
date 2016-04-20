@@ -454,6 +454,32 @@ class TestQualtrics(unittest.TestCase):
         self.assertNotEquals(link2, link3)
         self.assertIsNone(self.qualtrics.last_error_message)
 
+        link4 = self.qualtrics.generate_unique_survey_link(
+            SurveyID="",
+            LibraryID=self.library_id,
+            PanelID=panel_id,
+            DistributionID=distribution_id,
+            FirstName="Py",
+            LastName="Qualtrics",
+            Email="pyqualtrics@gmail.com",
+        )
+        self.assertIsNone(link4)
+        self.assertIsNotNone(self.qualtrics.last_error_message)
+        print self.qualtrics.last_error_message
+
+        link5 = self.qualtrics.generate_unique_survey_link(
+            SurveyID=self.survey_id,
+            LibraryID="",
+            PanelID=panel_id,
+            DistributionID=distribution_id,
+            FirstName="Py",
+            LastName="Qualtrics",
+            Email="pyqualtrics@gmail.com",
+        )
+        self.assertIsNone(link4)
+        self.assertIsNotNone(self.qualtrics.last_error_message)
+        print self.qualtrics.last_error_message
+
         self.qualtrics.deletePanel(self.library_id, panel_id)
         self.assertIsNone(self.qualtrics.last_error_message)
 
