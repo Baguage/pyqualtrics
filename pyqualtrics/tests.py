@@ -355,14 +355,26 @@ class TestQualtrics(unittest.TestCase):
         # Get completed responses
         responses = self.qualtrics.getLegacyResponseData(SurveyID=self.survey_id)
         self.assertIsNotNone(responses)
-        self.assertEqual(len(responses), 1)
+        self.assertEqual(len(responses), 3)
 
-        for response_id, response in responses.iteritems():
-            self.assertEqual(response["SubjectID"], "PY0001")
-            # Not if response was imported to Qualtrics, Finished is a string, not a number
-            self.assertEqual(response["Finished"], '1')
-            self.assertEqual(response["Q1"], 1)
-            self.assertEqual(response["Q2"], 3)
+        key, response = responses.popitem(last=False)
+        self.assertEqual(response["SubjectID"], "PY0001")
+        # Note if response was imported to Qualtrics, Finished is a string, not a number
+        self.assertEqual(response["Finished"], '1')
+        self.assertEqual(response["Q1"], 1)
+        self.assertEqual(response["Q2"], 3)
+
+        key, response = responses.popitem(last=False)
+        self.assertEqual(response["SubjectID"], "")
+        self.assertEqual(response["Finished"], '1')
+        self.assertEqual(response["Q1"], 1)
+        self.assertEqual(response["Q2"], 3)
+
+        key, response = responses.popitem(last=False)
+        self.assertEqual(response["SubjectID"], "TEST0001")
+        self.assertEqual(response["Finished"], '1')
+        self.assertEqual(response["Q1"], 2)
+        self.assertEqual(response["Q2"], 1)
 
         # Note that responses in progress do not have ResponseID, they have Survey Session ID instead
         # When response is completed, Survey Session ID is gone and new ResponseID is assigned
@@ -373,7 +385,7 @@ class TestQualtrics(unittest.TestCase):
         for survey_session_id, response in responses.iteritems():
             self.assertEqual(response["SubjectID"], "")
             self.assertEqual(response["Finished"], 0)
-            self.assertEqual(response["Q1"], 2)
+            self.assertEqual(response["Q1"], "")
             self.assertEqual(response["Q2"], "")
 
     def test_get_response(self):

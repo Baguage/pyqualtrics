@@ -1,4 +1,6 @@
 ResponseID,ResponseSet,IPAddress,StartDate,EndDate,RecipientLastName,RecipientFirstName,RecipientEmail,ExternalDataReference,Finished,Status,SubjectID,Q1,Q2,LocationLatitude,LocationLongitude,LocationAccuracy
 ResponseID,ResponseSet,IPAddress,StartDate,EndDate,RecipientLastName,RecipientFirstName,RecipientEmail,ExternalDataReference,Finished,Status,SubjectID,What's your gender?,How old are you?,LocationLatitude,LocationLongitude,LocationAccuracy
 {'ImportId': 'responseId'},{'ImportId': 'responseSetId'},{'ImportId': 'ipAddress'},{'ImportId': 'startDate'},{'ImportId': 'endDate'},{'ImportId': 'panel-RecipientLastName'},{'ImportId': 'panel-RecipientFirstName'},{'ImportId': 'panel-RecipientEmail'},{'ImportId': 'panel-ExternalDataReference'},{'ImportId': 'finished'},{'ImportId': 'status'},{'ImportId': 'embeddedData-SubjectID'},{'ImportId': 'QID1'},{'ImportId': 'QID2'},{'ImportId': 'Location-LocationLatitude'},{'ImportId': 'Location-LocationLongitude'},{'ImportId': 'Location-LocationAccuracy'}
-R_2sPsOsGV0GSrLJb,Default Response Set,129.74.117.12,4/8/2016 10:04,4/8/2016 10:04,,,,,1,0,PY0001,1,3,41.70069885,-86.25009918,-1
+R_2sPsOsGV0GSrLJb,Default Response Set,129.74.117.12,2016-04-08 12:04:00,2016-04-08 12:04:00,,,,,1,4,PY0001,1,3,,,-1
+R_Xj2NRqjlA2oxBgB,Default Response Set,,2016-04-19 23:19:41,2016-04-19 23:19:54,,,,,1,1,,1,3,41.642807006836,-86.075302124023,-1
+R_3nx9ljhWQFv45Qg,Default Response Set,98.220.1.194,2016-04-19 23:27:38,2016-04-19 23:27:44,,,,,1,0,TEST0001,2,1,41.642807006836,-86.075302124023,-1

@@ -21,6 +21,7 @@ import csv
 import json
 from StringIO import StringIO
 from collections import OrderedDict
+import collections
 
 import requests
 import os
@@ -113,7 +114,7 @@ class Qualtrics(object):
         self.last_url = r.url
         self.response = r.text
         try:
-            json_response = json.loads(r.text)
+            json_response = json.loads(r.text, object_pairs_hook=collections.OrderedDict)
         except ValueError:
             # If the data being deserialized is not a valid JSON document, a ValueError will be raised.
             self.json_response = None
