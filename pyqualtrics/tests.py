@@ -465,7 +465,6 @@ class TestQualtrics(unittest.TestCase):
         )
         self.assertIsNone(link4)
         self.assertIsNotNone(self.qualtrics.last_error_message)
-        print self.qualtrics.last_error_message
 
         link5 = self.qualtrics.generate_unique_survey_link(
             SurveyID=self.survey_id,
@@ -476,9 +475,8 @@ class TestQualtrics(unittest.TestCase):
             LastName="Qualtrics",
             Email="pyqualtrics@gmail.com",
         )
-        self.assertIsNone(link4)
+        self.assertIsNone(link5)
         self.assertIsNotNone(self.qualtrics.last_error_message)
-        print self.qualtrics.last_error_message
 
         self.qualtrics.deletePanel(self.library_id, panel_id)
         self.assertIsNone(self.qualtrics.last_error_message)
