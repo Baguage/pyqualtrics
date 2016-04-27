@@ -27,6 +27,8 @@ import requests
 import os
 
 
+__version__ = "0.4.1"
+
 class Qualtrics(object):
     """
     This is representation of Qualtrics REST API
