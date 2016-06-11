@@ -483,7 +483,6 @@ class Qualtrics(object):
             dictwriter.writerow(response)
 
         contents = fp.getvalue()
-        print contents
         return self.importResponses(
             SurveyID=SurveyID,
             ResponseSetID=ResponseSetID,
