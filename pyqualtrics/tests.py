@@ -552,7 +552,8 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
 
         result = self.qualtrics.importResponsesAsDict(
             survey_id,
-            [{"Finished": "1", "Q1": 2, "Q2": 1}],
+            [{"startDate": "", "endDate": "", "QID1": 1, "QID2": 2}],
+            # [{"Finished": "1", "Q1": 2, "Q2": 1}],
         )
 
         self.assertIsNone(self.qualtrics.last_error_message)
@@ -565,7 +566,7 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
             response = responses[response_id]
             self.assertEqual(response["Finished"], "1")
             self.assertEqual(response["Q1"], 1)
-            self.assertEqual(response["Q2"], 1)
+            self.assertEqual(response["Q2"], 2)
 
         self.qualtrics.deleteSurvey(survey_id)
 

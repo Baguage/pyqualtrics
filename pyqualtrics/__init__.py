@@ -420,6 +420,8 @@ class Qualtrics(object):
                         FileContents=None,
                         **kwargs):
         """ This request imports responses from csv file or URL to the specified survey.
+        Refer to https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#importResponses_2.5 for additional info
+
         :param SurveyID: The ID of the Survey the responses will be connected to.
         :param ResponseSetID: The ID of the response set the responses will be placed in.
         :param FileURL: The location of the CSV file containing the responses to be imported, we only support CSV files from ftp, ftps, http, and https. If you dont specify, it will use php://input from the request body.
@@ -452,6 +454,7 @@ class Qualtrics(object):
                         DecimalFormat=None,
                         **kwargs):
         """ Import responses from a python dictionary
+        Refer to https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#importResponses_2.5 for additional info
 
         :param SurveyID:
         :param responses: list of responses. Each response is represented as a dictionary
@@ -475,10 +478,12 @@ class Qualtrics(object):
         fp = StringIO(buffer)
         dictwriter = csv.DictWriter(fp, fieldnames=headers)
         dictwriter.writeheader()
+        dictwriter.writeheader()
         for response in responses:
             dictwriter.writerow(response)
 
         contents = fp.getvalue()
+        print contents
         return self.importResponses(
             SurveyID=SurveyID,
             ResponseSetID=ResponseSetID,
