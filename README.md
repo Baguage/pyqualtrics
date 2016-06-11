@@ -1,4 +1,3 @@
-[![Downloads](https://img.shields.io/pypi/dw/pyqualtrics.svg)](https://pypi.python.org/pypi/pyqualtrics)
 [![Version](https://img.shields.io/pypi/v/pyqualtrics.svg)](https://pypi.python.org/pypi/pyqualtrics)
 [![License](https://img.shields.io/pypi/l/pyqualtrics.svg)](https://pypi.python.org/pypi/pyqualtrics)
 [![Python](https://img.shields.io/pypi/pyversions/pyqualtrics.svg)](https://pypi.python.org/pypi/pyqualtrics)
@@ -71,6 +70,13 @@ If you want to run full test suite, you may want to create a survey, a message a
 QUALTRICS_SURVEY_ID, QUALTRICS_RESPONSE_ID and QUALTRICS_MESSAGE_ID variable should be set to activate those tests
 
 You can re-created Qualtrics survey used for testing using files in qualtrics_files_for_tests directory
+
+# Notes for test_get_legacy_response_data test
+
+This test requires a partially completed response in "getLegacyData test" survey (SV_8pqqcl4sy2316ZL), 
+and it will closed after 6 month (max timeout allowed by Qualtrics). Thus every 6 month new 
+partially completed response should be created. 
+Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male". Don't answer the second question
 
 # Bugs and requests
 

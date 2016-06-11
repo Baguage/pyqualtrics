@@ -1,5 +1,8 @@
 0.5.0
-  * More tests
+  [*] More tests
+  [+] updateResponseEmbeddedData function
+  [+] importResponses function
+  [+] importResponsesAsDict function
 
 0.4.1 4/25/2016
   [+] createDistribution function (for generating unique survey links)

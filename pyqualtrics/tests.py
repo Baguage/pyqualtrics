@@ -293,7 +293,10 @@ class TestQualtrics(unittest.TestCase):
                 Name="Test survey import (DELETE ME - 1)",
                 FileContents="123"
         )
-        self.assertEqual(self.qualtrics.last_error_message, "Error parsing file: The file does not appear to be a valid survey")
+        self.assertFalse(result)
+        self.assertEqual(
+            self.qualtrics.last_error_message,
+            "Error parsing file: The file does not appear to be a valid survey")
 
         # Unknown survey format
         result = self.qualtrics.importSurvey(
@@ -301,7 +304,10 @@ class TestQualtrics(unittest.TestCase):
                 Name="Test survey import (DELETE ME - 2)",
                 FileContents="123"
         )
-        self.assertEqual(self.qualtrics.last_error_message, "Invalid request. Missing or invalid parameter ImportFormat.")
+        self.assertFalse(result)
+        self.assertEqual(
+            self.qualtrics.last_error_message,
+            "Invalid request. Missing or invalid parameter ImportFormat.")
 
     def test_import_survey(self):
         survey_id = self.qualtrics.importSurvey(
@@ -328,7 +334,8 @@ class TestQualtrics(unittest.TestCase):
         survey_id = self.qualtrics.importSurvey(
                 ImportFormat="QSF",
                 Name="Test survey import (DELETE ME - curatend)",
-                URL="https://curate.nd.edu/downloads/xs55m903893"
+                # URL="https://curate.nd.edu/downloads/xs55m903893",
+                URL="https://github.com/Baguage/pyqualtrics/raw/master/pyqualtrics/pyqualtrics.qsf",
         )
         self.assertIsNotNone(survey_id)
         self.assertIsNone(self.qualtrics.last_error_message)
@@ -352,6 +359,14 @@ class TestQualtrics(unittest.TestCase):
         self.assertTrue("DOCTYPE html PUBLIC" in result)
 
     def test_get_legacy_response_data(self):
+        """
+        WARNING!!!
+        This test requires a partially completed response in "getLegacyData test" survey (SV_8pqqcl4sy2316ZL),
+and it will closed after 6 month (max timeout allowed by Qualtrics). Thus every 6 month new
+partially completed response should be created.
+Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male". Don't answer the second question
+        :return:
+        """
         # Get completed responses
         responses = self.qualtrics.getLegacyResponseData(SurveyID=self.survey_id)
         self.assertIsNotNone(responses)
@@ -385,7 +400,7 @@ class TestQualtrics(unittest.TestCase):
         for survey_session_id, response in responses.iteritems():
             self.assertEqual(response["SubjectID"], "")
             self.assertEqual(response["Finished"], 0)
-            self.assertEqual(response["Q1"], "")
+            self.assertEqual(response["Q1"], 1)
             self.assertEqual(response["Q2"], "")
 
     def test_get_response(self):
@@ -398,20 +413,23 @@ class TestQualtrics(unittest.TestCase):
 
     def test_create_distribution(self):
         panel_id = self.qualtrics.createPanel(self.library_id, "(DELETE ME) Panel for testing distributions")
-        distribution_id = self.qualtrics.createDistribution(SurveyID=self.survey_id,
-                                                   PanelID=panel_id,
-                                                   Description="Test distribution",
-                                                   PanelLibraryID=self.library_id)
+        distribution_id = self.qualtrics.createDistribution(
+            SurveyID=self.survey_id,
+            PanelID=panel_id,
+            Description="Test distribution",
+            PanelLibraryID=self.library_id)
         self.qualtrics.deletePanel(self.library_id, panel_id)
         self.assertIsNotNone(distribution_id)
         self.assertIsNone(self.qualtrics.last_error_message)
 
     def test_generate_unique_survey_link(self):
         panel_id = self.qualtrics.createPanel(self.library_id, "(DELETE ME) Panel for testing unique links")
-        distribution_id = self.qualtrics.createDistribution(SurveyID=self.survey_id,
-                                                   PanelID=panel_id,
-                                                   Description="Test distribution",
-                                                   PanelLibraryID=self.library_id)
+        distribution_id = self.qualtrics.createDistribution(
+            SurveyID=self.survey_id,
+            PanelID=panel_id,
+            Description="Test distribution",
+            PanelLibraryID=self.library_id)
+
         link1 = self.qualtrics.generate_unique_survey_link(
             SurveyID=self.survey_id,
             LibraryID=self.library_id,
@@ -480,6 +498,76 @@ class TestQualtrics(unittest.TestCase):
 
         self.qualtrics.deletePanel(self.library_id, panel_id)
         self.assertIsNone(self.qualtrics.last_error_message)
+
+    def test_import_responses_and_update_embedded_data(self):
+        survey_id = self.qualtrics.importSurvey(
+                ImportFormat="QSF",
+                Name="Test importResponses (DELETE ME - 4)",
+                FileContents=open(os.path.join(base_dir, "pyqualtrics-ed.qsf")).read()
+        )
+        self.assertIsNotNone(survey_id)
+        self.assertIsNone(self.qualtrics.last_error_message)
+
+        result = self.qualtrics.importResponses(
+            survey_id,
+            FileContents=open(os.path.join(base_dir, "response.csv")).read()
+        )
+
+        self.assertIsNone(self.qualtrics.last_error_message)
+        self.assertTrue(result)
+
+        responses = self.qualtrics.getLegacyResponseData(survey_id)
+        self.assertIsNone(self.qualtrics.last_error_message)
+        self.assertEqual(len(responses), 1)
+        for response_id in responses:
+            response = responses[response_id]
+            self.assertEqual(response["Finished"], "1")
+            self.assertEqual(response["Q1"], 1)
+            self.assertEqual(response["Q2"], 1)
+            # Note that Embedded Data must be declared in Survey
+            # before they can be updated with updateResponseEmbeddedData function
+            self.qualtrics.updateResponseEmbeddedData(
+                survey_id,
+                response_id,
+                ED={"TEST": "Yay!"}
+            )
+
+        responses = self.qualtrics.getLegacyResponseData(survey_id)
+        for response_id in responses:
+            response = responses[response_id]
+            self.assertEqual(response["TEST"], "Yay!")
+            self.assertIn(response["Q_ID"], "")
+        # print responses
+
+        self.qualtrics.deleteSurvey(survey_id)
+
+    def test_import_responses_as_dict(self):
+        survey_id = self.qualtrics.importSurvey(
+                ImportFormat="QSF",
+                Name="Test responses_as_dict import (DELETE ME - 4)",
+                FileContents=open(os.path.join(base_dir, "pyqualtrics.qsf")).read()
+        )
+        self.assertIsNotNone(survey_id)
+        self.assertIsNone(self.qualtrics.last_error_message)
+
+        result = self.qualtrics.importResponsesAsDict(
+            survey_id,
+            [{"Finished": "1", "Q1": 2, "Q2": 1}],
+        )
+
+        self.assertIsNone(self.qualtrics.last_error_message)
+        self.assertTrue(result)
+
+        responses = self.qualtrics.getLegacyResponseData(survey_id)
+        self.assertIsNone(self.qualtrics.last_error_message)
+        self.assertEqual(len(responses), 1)
+        for response_id in responses:
+            response = responses[response_id]
+            self.assertEqual(response["Finished"], "1")
+            self.assertEqual(response["Q1"], 1)
+            self.assertEqual(response["Q2"], 1)
+
+        self.qualtrics.deleteSurvey(survey_id)
 
     def tearDown(self):
         # Note that tearDown is called after EACH test

@@ -70,7 +70,7 @@ class Qualtrics(object):
         return "%s(%r)" % (self.__class__, self.__dict__)
 
     def request(self, Request, post_data=None, post_files=None, **kwargs):
-        """ Send GET or POST request to Qualtrics API
+        """ Send GET or POST request to Qualtrics API using v2.x format
         https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#overview_2.5
 
         This function also sets self.last_error_message and self.json_response
@@ -409,6 +409,103 @@ class Qualtrics(object):
             self.last_error_message = "Qualtrics error: ResponseID %s not in response" % ResponseID
             return None
         return response[ResponseID]
+
+    def importResponses(self, SurveyID,
+                        ResponseSetID=None,
+                        FileURL=None,
+                        Delimiter=None,
+                        Enclosure=None,
+                        IgnoreValidation=None,
+                        DecimalFormat=None,
+                        FileContents=None,
+                        **kwargs):
+        """ This request imports responses from csv file or URL to the specified survey.
+        :param SurveyID: The ID of the Survey the responses will be connected to.
+        :param ResponseSetID: The ID of the response set the responses will be placed in.
+        :param FileURL: The location of the CSV file containing the responses to be imported, we only support CSV files from ftp, ftps, http, and https. If you dont specify, it will use php://input from the request body.
+        :param Delimiter: 	Separate values by this character. Default is , (comma)
+        :param Enclosure: Allows a value to contain the delimiter. Default is " (quote)
+        :param IgnoreValidation: If set to true (1), we will not validate the responses as we import.
+        :param DecimalFormat: Decimals delimiter. Possible values are ,(comma) and .(period)
+        :param FileContents: The contents of the file posted using multipart/form-data
+        :return:
+        """
+        if not self.request(
+                "importResponses",
+                SurveyID=SurveyID,
+                ResponseSetID=ResponseSetID,
+                FileURL=FileURL,
+                Delimiter=Delimiter,
+                Enclosure=Enclosure,
+                IgnoreValidation=IgnoreValidation,
+                DecimalFormat=DecimalFormat,
+                post_files={"FileContents": FileContents} if FileContents else None,
+                **kwargs):
+            return False
+        return True
+
+    def importResponsesAsDict(self, SurveyID, responses,
+                        ResponseSetID=None,
+                        Delimiter=None,
+                        Enclosure=None,
+                        IgnoreValidation=None,
+                        DecimalFormat=None,
+                        **kwargs):
+        """ Import responses from a python dictionary
+
+        :param SurveyID:
+        :param responses: list of responses. Each response is represented as a dictionary
+            [
+            {"ResponseID": "R_1234", ...},
+            {"ResponseID": "R_1235", "Finished": "1", ...},
+            ]
+        :param ResponseSetID: The ID of the response set the responses will be placed in.
+        :param Delimiter: Separate values by this character. Default is , (comma)
+        :param Enclosure: Allows a value to contain the delimiter. Default is " (quote)
+        :param IgnoreValidation: If set to true (1), we will not validate the responses as we import.
+        :param DecimalFormat: Decimals delimiter. Possible values are ,(comma) and .(period)
+        :param kwargs: Additional parameters
+        :return:
+        """
+        assert(isinstance(responses, list))
+        if len(responses) < 1:
+            return True
+        headers = responses[0].keys()
+        buffer = str()
+        fp = StringIO(buffer)
+        dictwriter = csv.DictWriter(fp, fieldnames=headers)
+        dictwriter.writeheader()
+        for response in responses:
+            dictwriter.writerow(response)
+
+        contents = fp.getvalue()
+        return self.importResponses(
+            SurveyID=SurveyID,
+            ResponseSetID=ResponseSetID,
+            Delimiter=Delimiter,
+            Enclosure=Enclosure,
+            IgnoreValidation=IgnoreValidation,
+            DecimalFormat=DecimalFormat,
+            FileContents=contents,
+            **kwargs)
+
+    def updateResponseEmbeddedData(self, SurveyID, ResponseID, ED, **kwargs):
+        """
+        Updates the embedded data for a given response.
+        :param SurveyID: The survey ID of the response to update.
+        :param ResponseID: The response ID for the response to update.
+        :param ED: The new embedded data, dictionary
+        :param kwargs: Additional arguments (Version, Format etc)
+        :return: True or False
+        """
+        if not self.request(
+                "updateResponseEmbeddedData",
+                SurveyID=SurveyID,
+                ResponseID=ResponseID,
+                ED=ED,
+                **kwargs):
+            return False
+        return True
 
     def getPanel(self, LibraryID, PanelID, EmbeddedData=None, LastRecipientID=None, NumberOfRecords=None,
                  ExportLanguage=None, Unsubscribed=None, Subscribed=None, **kwargs):
