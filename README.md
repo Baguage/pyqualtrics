@@ -7,16 +7,11 @@ PyQualtrics
 
 Unofficial python SDK for Qualtrics API
 
-# API Documentation
-
-The Qualtrics REST API allows you to query our system using a simple URL syntax. All requests are simple GET or POST requests that return XML or JSON.
-Official API documenation is available on https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php
-This library uses API v2.5
-
 # System requirements
 
-Python 2.7 only. Requires setuptools.
-Run `python ez_setup.py` command if you do not have setuptools installed in your virtual environment.
+Python 2.7 only. 
+
+Requires setuptools. It might be already installed on your system, but if not you can use `ez_setup.py` script to install setuptools.
 
 # Installation
 
@@ -26,31 +21,92 @@ Install the latest release using pip:
 
 Development version can installed using `pip install git+https://github.com/Baguage/pyqualtrics.git`
 
-Alternatively, you can download or clone this repo and call `pip install -e ..`
+Alternatively, you can download or clone this repo and run `pip install -e ..`
+
+# Configuration
+This library requires account with Qualtrics API enabled. Check with your Qualtrics representative to see if API 
+Access is available for your account.
+
+Please refer to https://www.qualtrics.com/support/integrations/api-integration/api-integration/ 
+for information on how to get your API Token and other Qualtrics IDs.
+
 
 # Usage example
 
-This library requires account with Qualtrics API enabled. Check with your Qualtrics representative to see if API 
-Access is available for your account. 
-
-Please refer to http://www.qualtrics.com/university/researchsuite/developer-tools/api-integration/qualtrics-rest-api/ 
-for information on how to get your API Token and other Qualtrics IDs.
-
-This is how you get get list of all responses to a survey. A python dictionary is returned by getLegacyResponseData
-function
+This is how you can get list of all responses to a survey. 
 
 ```python
 from pyqualtrics import Qualtrics
 
+QUALTRICS_USER = "user@nd.edu#nd"
+QUALTRICS_TOKEN = "lskdjfla93402930sldfkajlk32l4w3fsddsf"
+QUALTRICS_SURVEY_ID = "SV_8pqqcl4sy2316ZF"
+
 qualtrics = Qualtrics(QUALTRICS_USER, QUALTRICS_TOKEN)
 responses = qualtrics.getLegacyResponseData(SurveyID=QUALTRICS_SURVEY_ID)
 for response_id, response in responses.itemitem():
-    print response_id + " - " + response["Finished"]
+    print response_id + " : " + response["Finished"]
 ```
+
+getLegacyResponseData function returns an OrderedDict of all survey responses.
 
 # Documentation
 
 Full documenation is not yet available.
+
+# Bugs and requests
+
+Qualtrics support is awesome, but this is not official Qualtrics SDK and they DO NOT support this piece of software.
+If you have found a bug or if you have a request for additional functionality, please use the issue tracker on GitHub.
+
+https://github.com/Baguage/pyqualtrics/issues
+
+# Error handling
+
+If API call was not successful (return None or False), additional information about problem can be found in the following attributes of the Qualtrics object
+
+`qualtrics.last_error_message` : Human-readable error message (set to None is no error occurs)
+
+`qualtrics.response` : server response as a text string. Can be useful for debugging if server did not return JSON response for some reason
+
+`qualtrics.json_response` : python dictionary, JSON response returned by the server. Can be None (if response is not a JSON document) 
+
+`qualtrics.last_url` : URL constructed by the library
+
+```python
+xml = qualtrics.getSurvey(id="SV_8pqqcl4sy2316ZF")
+if not xml:
+   print "Error getting survey: %s" % qualtrics.last_error_message
+```
+
+If malformed response from Qualtrics is received, RuntimeError exception will be raised.
+```python
+try:
+    qualtrics.updateEmbeddedData("")
+except RuntimeError as e:
+    print("Something went terribly wrong: %s" % e
+    print("Last URL used: %s" % qualtrics.last_url
+    print("Server response: %s" % qualtrics.response
+```
+
+# License
+
+You can use this under Apache 2.0. See LICENSE.txt file for details.
+
+# Author
+
+Alex Vyushkov, pyqualtrics[at]gmail.com
+
+
+Developer's notes
+====
+
+# API Documentation
+
+The Qualtrics REST API allows you to query our system using a simple URL syntax. All requests are simple GET or POST requests that return XML or JSON.
+Official API documenation is available on https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php
+
+This library uses API v2.5
 
 # How to run tests
 
@@ -77,35 +133,6 @@ This test requires a partially completed response in "getLegacyData test" survey
 and it will closed after 6 month (max timeout allowed by Qualtrics). Thus every 6 month new 
 partially completed response should be created. 
 Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male". Don't answer the second question
-
-# Bugs and requests
-
-Qualtrics support is awesome, but this is not official Qualtrics SDK and they DO NOT support this piece of software.
-If you have found a bug or if you have a request for additional functionality, please use the issue tracker on GitHub.
-
-https://github.com/Baguage/pyqualtrics/issues
-
-# Error handling
-
-If API call was not successful, additional information about problem can be found in the following attributes of the Qualtrics object
-
-qualtrics.last_error_message - Human-readable error message (set to None is no error occurs)
-
-qualtrics.response - server response as a text string. May be useful for debugging if server did not return JSON response for some reason
-
-qualtrics.json_response - python dictionary, JSON response returned by the server. May be None (if response is not a JSON document) 
-
-qualtrics.last_url - URL constructed by the library
-
-If maiformed response from Qualtrics is received, RuntimeError exception will be raised.
-
-# License
-
-You can use this under Apache 2.0. See LICENSE.txt file for details.
-
-# Author
-
-Alex Vyushkov, pyqualtrics[at]gmail.com
 
 # Misc
 

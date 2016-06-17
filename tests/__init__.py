@@ -335,8 +335,10 @@ class TestQualtrics(unittest.TestCase):
                 ImportFormat="QSF",
                 Name="Test survey import (DELETE ME - curatend)",
                 # URL="https://curate.nd.edu/downloads/xs55m903893",
-                URL="https://github.com/Baguage/pyqualtrics/raw/master/pyqualtrics/pyqualtrics.qsf",
+                URL="https://github.com/Baguage/pyqualtrics/raw/master/tests/pyqualtrics.qsf",
         )
+        self.assertIsNone(self.qualtrics.last_error_message)
+
         self.assertIsNotNone(survey_id)
         self.assertIsNone(self.qualtrics.last_error_message)
 
@@ -569,6 +571,23 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
             self.assertEqual(response["Q2"], 2)
 
         self.qualtrics.deleteSurvey(survey_id)
+
+    def test_subscriptions(self):
+        print "Subscriptions"
+        self.qualtrics.getAllSubscriptions()
+        print self.qualtrics.last_url
+        print self.qualtrics.last_error_message
+
+        result = self.qualtrics.subscribe(
+            Name="New responses",
+            PublicationURL="https://wellbeing.crc.nd.edu",
+            Topics="surveyengine.completedResponse." + self.survey_id
+        )
+        print result
+        print self.qualtrics.last_url
+        print self.qualtrics.last_error_message
+
+        self.assertFalse(True)
 
     def tearDown(self):
         # Note that tearDown is called after EACH test

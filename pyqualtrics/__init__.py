@@ -619,6 +619,43 @@ class Qualtrics(object):
 
         return self.json_response["Result"]
 
+    def getAllSubscriptions(self):
+        """ Allows a 3rd party to check the status of all their subscriptions.
+        https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#getAllSubscriptions_2.5
+
+        !!! NOT YET TESTED !!!
+
+        :return:
+        """
+        return self.request(
+            "getAllSubscriptions",
+        )
+
+    def subscribe(self, Name, PublicationURL, Topics, Encrypt=None, SharedKey=None, BrandID=None, **kwargs):
+        """ Allows a 3rd party client to subscribe to Qualtrics events.
+        Topic subscription can be a single event * (Ex: 'threesixty.created') or a wildcard list of events
+        using the * (star) notation to denote 'everything'
+        (Ex:’threesixty.*’ will subscribe to all 360 events from Qualtrics.)
+
+        !!! NOT YET TESTED !!!
+
+        https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#subscribe_2.5
+
+        :return:
+        """
+        result = self.request(
+            "subscribe",
+            Name=Name,
+            PublicationURL=PublicationURL,
+            Topics=Topics,
+            Encrypt=Encrypt,
+            SharedKey=SharedKey,
+            BrandID=BrandID,
+        )
+
+        return result
+
+
     def generate_unique_survey_link(self, SurveyID, LibraryID, PanelID, DistributionID, FirstName, LastName, Email, ExternalDataRef="", Language="English", EmbeddedData=None):
         """ Generate unique survey link for a person. Based on a response from Qualtrics Support
         :param SurveyID:
