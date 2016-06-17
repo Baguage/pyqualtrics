@@ -573,19 +573,19 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
         self.qualtrics.deleteSurvey(survey_id)
 
     def test_subscriptions(self):
-        print "Subscriptions"
+        print("Subscriptions")
         self.qualtrics.getAllSubscriptions()
-        print self.qualtrics.last_url
-        print self.qualtrics.last_error_message
+        print(self.qualtrics.last_url)
+        print(self.qualtrics.last_error_message)
 
         result = self.qualtrics.subscribe(
             Name="New responses",
             PublicationURL="https://wellbeing.crc.nd.edu",
             Topics="surveyengine.completedResponse." + self.survey_id
         )
-        print result
-        print self.qualtrics.last_url
-        print self.qualtrics.last_error_message
+        print(result)
+        print(self.qualtrics.last_url)
+        print(self.qualtrics.last_error_message)
 
         self.assertFalse(True)
 
@@ -595,7 +595,7 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
         # Remove all surveys with (DELETE ME in their name
         for survey_id, survey in self.qualtrics.getSurveys().iteritems():
             if "(DELETE ME" in survey["SurveyName"]:
-                print "Deleting survey %s" % survey["SurveyName"]
+                print("Deleting survey %s" % survey["SurveyName"])
                 self.qualtrics.deleteSurvey(SurveyID=survey_id)
 
 
