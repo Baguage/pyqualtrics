@@ -45,7 +45,7 @@ setup(
         # If any package contains *.qsf or *.rst files, include them:
         '': ['*.qsf', '*.rst'],
     },
-    test_suite="pyqualtrics.tests",
+    test_suite="tests",
     classifiers=[
         "Development Status :: 3 - Alpha",
         "License :: OSI Approved :: Apache Software License",
