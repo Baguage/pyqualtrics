@@ -5,7 +5,11 @@
 PyQualtrics
 =====
 
-Unofficial python SDK for Qualtrics API
+Unofficial python API for Qualtrics. 
+-------------------
+This library is intended to simplify integration of Qualtrics system with your python application, while preserving semantics of API when possible. You can automate survey or panel creation, automatically load survey responses to your system, use this library in your scripts and so on.
+
+My ultimate goal is cover all API calls. Some of them (subscribe, createUser etc) require admin access, and I don't have it currently, so adding support for them may take a while. I do welcome pull requests if you'd like to contribute.
 
 # System requirements
 
@@ -91,7 +95,7 @@ except RuntimeError as e:
 
 # License
 
-You can use this under Apache 2.0. See LICENSE.txt file for details.
+You can use this under Apache 2.0. See LICENSE.txt file for details. I appreciate if you drop me a line if you find this library useful!
 
 # Author
 
