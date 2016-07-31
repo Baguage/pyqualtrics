@@ -26,8 +26,10 @@ import collections
 import requests
 import os
 
+from requests.exceptions import ConnectionError, Timeout, TooManyRedirects, HTTPError
 
-__version__ = "0.5.0"
+__version__ = "0.5.1"
+
 
 class Qualtrics(object):
     """
@@ -44,18 +46,19 @@ class Qualtrics(object):
         if user is None:
             user = os.environ.get("QUALTRICS_USER", None)
         if user is None:
-            raise ValueError("user parameter should be passed to __init__ or enviroment variable  QUALTRICS_USER should be set")  # noqa
+            raise ValueError("user parameter should be passed to __init__ or environment variable  QUALTRICS_USER should be set")  # noqa
         self.user = user
 
         if token is None:
             token = os.environ.get("QUALTRICS_TOKEN", None)
         if token is None:
-            raise ValueError("token parameter should be passed to __init__ or enviroment variable QUALTRICS_TOKEN should be set")  # noqa
+            raise ValueError("token parameter should be passed to __init__ or environment variable QUALTRICS_TOKEN should be set")  # noqa
         self.token = token
         self.default_api_version = api_version
         # Version must be a string, not an integer or float
         assert self.default_api_version, (str, unicode)
         self.last_error_message = None
+        self.last_status_code = None
         self.last_url = None
         self.json_response = None
         self.response = None  # For debugging purpose
@@ -102,19 +105,38 @@ class Qualtrics(object):
             for key in ed:
                 params["ED[%s]" % key] = ed[key]
 
-        if post_data:
-            r = requests.post(self.url,
-                              data=post_data,
-                              params=params)
-        elif post_files:
-            r = requests.post(self.url,
-                              files=post_files,
-                              params=params)
-        else:
-            r = requests.get(self.url,
-                             params=params)
+        self.json_response = None
+        self.last_error_message = "Not yet set by request function"
+        self.last_status_code = None
+        try:
+            if post_data:
+                r = requests.post(self.url,
+                                  data=post_data,
+                                  params=params)
+            elif post_files:
+                r = requests.post(self.url,
+                                  files=post_files,
+                                  params=params)
+            else:
+                r = requests.get(self.url,
+                                 params=params)
+        except (ConnectionError, Timeout, TooManyRedirects, HTTPError) as e:
+            # http://docs.python-requests.org/en/master/user/quickstart/#errors-and-exceptions
+            # ConnectionError: In the event of a network problem (e.g. DNS failure, refused connection, etc) Requests will raise a ConnectionError exception.
+            # HTTPError: Response.raise_for_status() will raise an HTTPError if the HTTP request returned an unsuccessful status code.
+            # Timeout: If a request times out, a Timeout exception is raised.
+            # TooManyRedirects: If a request exceeds the configured number of maximum redirections, a TooManyRedirects exception is raised.
+            self.last_url = ""
+            self.response = None
+            self.last_error_message = str(e)
+            return None
+
         self.last_url = r.url
         self.response = r.text
+        self.last_status_code = r.status_code
+        if r.status_code == 403:
+            self.last_error_message = "API Error: HTTP Code %s (Forbidden)" % r.status_code
+            return None
         try:
             json_response = json.loads(r.text, object_pairs_hook=collections.OrderedDict)
         except ValueError:
@@ -122,10 +144,11 @@ class Qualtrics(object):
             self.json_response = None
             if "Format" not in kwargs:
                 self.last_error_message = "Unexpected response from Qualtrics: not a JSON document"
-                raise RuntimeError(self.last_error_message)
+                return None
             else:
                 # Special case - getSurvey. That request has a custom response format (xml).
                 # It does not follow the default response format
+                self.last_error_message = None
                 return r.text
 
         self.json_response = json_response
@@ -133,15 +156,16 @@ class Qualtrics(object):
         if (Request == "getLegacyResponseData" or Request == "getPanel") and "Meta" not in json_response:
             # Special cases - getLegacyResponseData and getPanel
             # Success
+            self.last_error_message = None
             return json_response
         if "Meta" not in json_response:
             # Should never happen
-           self.last_error_message = "Unexpected response from Qualtrics: no Meta key in JSON response"
-           raise RuntimeError(self.last_error_message)
+            self.last_error_message = "Unexpected response from Qualtrics: no Meta key in JSON response"
+            return None
         if "Status" not in json_response["Meta"]:
             # Should never happen
             self.last_error_message = "Unexpected response from Qualtrics: no Status key in JSON response"
-            raise RuntimeError(self.last_error_message)
+            return None
 
         if json_response["Meta"]["Status"] == "Success":
             self.last_error_message = None
@@ -249,14 +273,12 @@ class Qualtrics(object):
         {u'Meta': {u'Status': u'Success', u'Debug': u''},
         u'Result': {u'DistributionQueueID': u'EMD_e3F0KAIVfzIYw0R', u'EmailDistributionID': u'EMD_e3F0KAIVfzIYw0R', u'Success': True}}
 
-
         :param kwargs:
         :return: EmailDistributionID
         """
         if not self.request("sendSurveyToIndividual", **kwargs):
             return None
         return self.json_response["Result"]["EmailDistributionID"]
-
 
     def createDistribution(self, SurveyID, PanelID, Description, PanelLibraryID, **kwargs):
         """ Creates a distribution for survey and a panel. No emails will be sent. Distribution Links can be generated
@@ -323,10 +345,11 @@ class Qualtrics(object):
         If it is a problem, it is up to application to handle this situation.
 
         https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#importSurvey_2.5
-        :param ImportFormat:
-        :param Name:
-        :param Activate:
-        :param URL:
+
+        :param ImportFormat: 	The format of the import: TXT, QSF, DOC, MSQ
+        :param Name: 	The survey name.
+        :param Activate: If FALSE (0) will be created in an Inactive state. If TRUE (1) will be created in an active state.
+        :param URL: If present it will import the file from the given URL.
         :param FileContents:
         :param OwnerID:
         :return:
@@ -377,7 +400,26 @@ class Qualtrics(object):
             return True
         return False
 
-    def getLegacyResponseData(self, SurveyID, **kwargs):
+    def getLegacyResponseData(
+            self,
+            SurveyID,
+            LastResponseID=None,
+            Limit=None,
+            ResponseID=None,
+            ResponseSetID=None,
+            SubgroupID=None,
+            StartDate=None,
+            EndDate=None,
+            Questions=None,
+            Labels=None,
+            ExportTags=None,
+            ExportQuestionIDs=None,
+            LocalTime=None,
+            UnansweredRecode=None,
+            PanelID=None,
+            ResponsesInProgress=None,
+            LocationData=None,
+            **kwargs):
         """ Returns all of the response data for a survey in the original (legacy) data format.
         https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#getLegacyResponseData_2.5
 
@@ -385,7 +427,26 @@ class Qualtrics(object):
         :param kwargs: Additional parameters allowed by getLegacyResponseData API call
         :return:
         """
-        return self.request("getLegacyResponseData", SurveyID=SurveyID, **kwargs)
+        return self.request(
+            "getLegacyResponseData",
+            SurveyID=SurveyID,
+            LastResponseID=LastResponseID,
+            Limit=Limit,
+            ResponseID=ResponseID,
+            ResponseSetID=ResponseSetID,
+            SubgroupID=SubgroupID,
+            StartDate=StartDate,
+            EndDate=EndDate,
+            Questions=Questions,
+            Labels=Labels,
+            ExportTags=ExportTags,
+            ExportQuestionIDs=ExportQuestionIDs,
+            LocalTime=LocalTime,
+            UnansweredRecode=UnansweredRecode,
+            PanelID=PanelID,
+            ResponsesInProgress=ResponsesInProgress,
+            LocationData=LocationData,
+            **kwargs)
 
     def getResponse(self, SurveyID, ResponseID, **kwargs):
         """ Get data for a single response ResponseID in SurveyID. SurveyID is required by API
@@ -496,6 +557,8 @@ class Qualtrics(object):
     def updateResponseEmbeddedData(self, SurveyID, ResponseID, ED, **kwargs):
         """
         Updates the embedded data for a given response.
+        https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#updateResponseEmbeddedData_2.5
+
         :param SurveyID: The survey ID of the response to update.
         :param ResponseID: The response ID for the response to update.
         :param ED: The new embedded data, dictionary

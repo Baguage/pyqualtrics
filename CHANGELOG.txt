@@ -1,3 +1,10 @@
+0.6.0 (In progress)
+  [+] Added mock.MockQualtrics object (for unit testing code that uses pyqualtrics.Qualtrics class)
+
+0.5.1 Hotfix for Ticket #21
+  [*] Fix for #21 ConnectionError is not handled properly
+  [-] importPanel function is currently broken, due to change on API end apparently
+
 0.5.0
   [*] More tests
   [+] updateResponseEmbeddedData function

@@ -286,7 +286,6 @@ class TestQualtrics(unittest.TestCase):
         self.assertIsNotNone(self.qualtrics.json_response)
 
     def test_import_survey_errors(self):
-
         # Survey contents is invalid
         result = self.qualtrics.importSurvey(
                 ImportFormat="QSF",
@@ -572,22 +571,69 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
 
         self.qualtrics.deleteSurvey(survey_id)
 
-    def test_subscriptions(self):
-        print("Subscriptions")
-        self.qualtrics.getAllSubscriptions()
-        print(self.qualtrics.last_url)
-        print(self.qualtrics.last_error_message)
+    # def test_subscriptions(self):
+    #     print("Subscriptions")
+    #     self.qualtrics.getAllSubscriptions()
+    #     print(self.qualtrics.last_url)
+    #     print(self.qualtrics.last_error_message)
+    #
+    #     result = self.qualtrics.subscribe(
+    #         Name="New responses",
+    #         PublicationURL="https://wellbeing.crc.nd.edu",
+    #         Topics="surveyengine.completedResponse." + self.survey_id
+    #     )
+    #     print(result)
+    #     print(self.qualtrics.last_url)
+    #     print(self.qualtrics.last_error_message)
+    #
+    #     self.assertFalse(True)
 
-        result = self.qualtrics.subscribe(
-            Name="New responses",
-            PublicationURL="https://wellbeing.crc.nd.edu",
-            Topics="surveyengine.completedResponse." + self.survey_id
-        )
-        print(result)
-        print(self.qualtrics.last_url)
-        print(self.qualtrics.last_error_message)
+    def test_connection_error_invalid_url(self):
+        url = self.qualtrics.url
+        self.qualtrics.url = "http://blablabla.bla"
+        responses = self.qualtrics.getLegacyResponseData(SurveyID=self.survey_id)
+        self.assertIsNone(responses)
+        self.assertIsNone(self.qualtrics.last_status_code)
+        self.assertIn("Max retries exceeded with url", self.qualtrics.last_error_message)
+        # Restore API URL for tearDown() function
+        self.qualtrics.url = url
 
-        self.assertFalse(True)
+    def test_connection_error_invalid_ip_address(self):
+        url = self.qualtrics.url
+        self.qualtrics.url = "http://0.0.0.0"
+        responses = self.qualtrics.getLegacyResponseData(SurveyID=self.survey_id)
+        self.assertIsNone(responses)
+        self.assertIsNone(self.qualtrics.last_status_code)
+        self.assertIn("Max retries exceeded with url", self.qualtrics.last_error_message)
+        # Restore API URL for tearDown() function
+        self.qualtrics.url = url
+
+    def test_not_a_json_document_google_com(self):
+        qualtrics = Qualtrics(self.user, "123")
+        qualtrics.url = "https://google.com"
+        self.assertRaises(RuntimeError, qualtrics.getLegacyResponseData, self.survey_id)
+
+    def test_403_error(self):
+        url = self.qualtrics.url
+        self.qualtrics.url = "https://survey.qualtrics.com/WRAPI/ControlPanel/api.php"
+        panel_id = self.qualtrics.importJsonPanel(
+            self.library_id,
+            Name="Panel for testing JSON Import",
+            panel=[
+                    {"Email": "pyqualtrics+1@gmail.com", "FirstName": "PyQualtrics", "LastName": "Library", "SubjectID": "SUBJ0001"},  # noqa
+                    {"Email": "pyqualtrics+2@gmail.com", "FirstName": "PyQualtrics2", "LastName": "Library2"}
+                  ],
+            headers=["Email", "FirstName", "LastName", "ExternalRef", "SubjectID"],
+            AllED=1)
+        self.assertEqual(self.qualtrics.last_status_code, 403)
+        self.assertIsNone(panel_id)
+        self.assertIsNone(self.qualtrics.json_response)
+        self.assertEquals("API Error: HTTP Code 403 (Forbidden)", self.qualtrics.last_error_message)
+        self.assertIsNotNone(self.qualtrics.response)
+        self.assertIn("Access Denied", self.qualtrics.response)
+        # Restore API URL for tearDown() function
+        self.qualtrics.url = url
+
 
     def tearDown(self):
         # Note that tearDown is called after EACH test
