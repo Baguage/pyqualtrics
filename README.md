@@ -12,7 +12,7 @@ My ultimate goal is cover all API calls. Some of them (subscribe, createUser etc
 
 # System requirements
 
-Python 2.7 only. 
+Python 2.7 only. I do intent to add support for Python 3.x in near future.
 
 Requires setuptools. It might be already installed on your system, but if not you can use `ez_setup.py` script to install setuptools.
 
@@ -30,8 +30,9 @@ Alternatively, you can download or clone this repo and run `pip install -e ..`
 This library requires account with Qualtrics API enabled. Check with your Qualtrics representative to see if API 
 Access is available for your account.
 
-Please refer to https://www.qualtrics.com/support/integrations/api-integration/api-integration/ 
-for information on how to get your API Token and other Qualtrics IDs.
+Please refer to https://www.qualtrics.com/support/integrations/api-integration/api-integration/#GeneratingAnAPIToken 
+for information on how to get your API Token and other Qualtrics IDs (in your Account Settings, 
+click "Qualtrics Ids").
 
 
 # Usage example
