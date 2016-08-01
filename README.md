@@ -1,11 +1,8 @@
-![Logo](img/pyqualtrics.png)
 [![Version](https://img.shields.io/pypi/v/pyqualtrics.svg)](https://pypi.python.org/pypi/pyqualtrics)
 [![License](https://img.shields.io/pypi/l/pyqualtrics.svg)](https://pypi.python.org/pypi/pyqualtrics)
 [![Python](https://img.shields.io/pypi/pyversions/pyqualtrics.svg)](https://pypi.python.org/pypi/pyqualtrics)
 
-
-PyQualtrics
-=====
+![Logo](img/pyqualtrics.png)
 
 Unofficial python API for Qualtrics. 
 -------------------
