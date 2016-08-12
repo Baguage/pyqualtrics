@@ -199,9 +199,9 @@ class TestQualtrics(unittest.TestCase):
                     {"Email": "pyqualtrics+1@gmail.com", "FirstName": "PyQualtrics", "LastName": "Library"},
                     {"Email": "pyqualtrics+2@gmail.com", "FirstName": "PyQualtrics2", "LastName": "Library2"}
                   ])
+        self.assertIsNone(self.qualtrics.last_error_message)
         self.assertIsNotNone(panel_id)
         self.assertIsNotNone(self.qualtrics.json_response)
-        self.assertIsNone(self.qualtrics.last_error_message)
 
         count = self.qualtrics.getPanelMemberCount(self.library_id, panel_id)
         self.assertEqual(count, 2)
@@ -263,9 +263,9 @@ class TestQualtrics(unittest.TestCase):
                   ],
             headers=["Email", "FirstName", "LastName", "ExternalRef", "SubjectID"],
             AllED=1)
+        self.assertIsNone(self.qualtrics.last_error_message)
         self.assertIsNotNone(panel_id)
         self.assertIsNotNone(self.qualtrics.json_response)
-        self.assertIsNone(self.qualtrics.last_error_message)
 
         count = self.qualtrics.getPanelMemberCount(self.library_id, panel_id)
         self.assertEqual(count, 2)
@@ -611,28 +611,10 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
     def test_not_a_json_document_google_com(self):
         qualtrics = Qualtrics(self.user, "123")
         qualtrics.url = "https://google.com"
-        self.assertRaises(RuntimeError, qualtrics.getLegacyResponseData, self.survey_id)
-
-    def test_403_error(self):
-        url = self.qualtrics.url
-        self.qualtrics.url = "https://survey.qualtrics.com/WRAPI/ControlPanel/api.php"
-        panel_id = self.qualtrics.importJsonPanel(
-            self.library_id,
-            Name="Panel for testing JSON Import",
-            panel=[
-                    {"Email": "pyqualtrics+1@gmail.com", "FirstName": "PyQualtrics", "LastName": "Library", "SubjectID": "SUBJ0001"},  # noqa
-                    {"Email": "pyqualtrics+2@gmail.com", "FirstName": "PyQualtrics2", "LastName": "Library2"}
-                  ],
-            headers=["Email", "FirstName", "LastName", "ExternalRef", "SubjectID"],
-            AllED=1)
-        self.assertEqual(self.qualtrics.last_status_code, 403)
-        self.assertIsNone(panel_id)
-        self.assertIsNone(self.qualtrics.json_response)
-        self.assertEquals("API Error: HTTP Code 403 (Forbidden)", self.qualtrics.last_error_message)
-        self.assertIsNotNone(self.qualtrics.response)
-        self.assertIn("Access Denied", self.qualtrics.response)
-        # Restore API URL for tearDown() function
-        self.qualtrics.url = url
+        result = qualtrics.getLegacyResponseData(SurveyID=self.survey_id)
+        self.assertEquals(qualtrics.last_error_message, "Unexpected response from Qualtrics: not a JSON document")
+        self.assertIsNone(qualtrics.json_response)
+        self.assertIsNone(result)
 
 
     def tearDown(self):
