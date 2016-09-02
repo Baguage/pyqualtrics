@@ -35,7 +35,6 @@ class Qualtrics(object):
     """
     This is representation of Qualtrics REST API
     """
-    url = "https://survey.qualtrics.com/WRAPI/ControlPanel/api.php"
 
     def __init__(self, user=None, token=None, api_version="2.5"):
         """
@@ -72,7 +71,7 @@ class Qualtrics(object):
         # Note this will print Qualtrics token - may be dangerous for logging
         return "%s(%r)" % (self.__class__, self.__dict__)
 
-    def request(self, Request, post_data=None, post_files=None, **kwargs):
+    def request(self, Request, Product='RS', post_data=None, post_files=None, **kwargs):
         """ Send GET or POST request to Qualtrics API using v2.x format
         https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#overview_2.5
 
@@ -87,6 +86,15 @@ class Qualtrics(object):
         Version = kwargs.pop("Version", self.default_api_version)
         # Version must be a string, not an integer or float
         assert Version, (str, unicode)
+
+        # Handling for Multi Product API calls
+
+        if (Product == 'RS'):
+            self.url = "https://survey.qualtrics.com/WRAPI/ControlPanel/api.php"
+        elif (Product == 'TA'):
+            self.url = "https://survey.qualtrics.com/WRAPI/Contacts/api.php"
+        else:
+            raise NotImplementedError('Please specify a valid product api')
 
         # Special case for handling embedded data
         ed = kwargs.pop("ED", None)
@@ -153,7 +161,8 @@ class Qualtrics(object):
 
         self.json_response = json_response
         # Sanity check.
-        if (Request == "getLegacyResponseData" or Request == "getPanel") and "Meta" not in json_response:
+        if (Request == "getLegacyResponseData" or Request == "getPanel" or Request == 
+            "getListContacts") and "Meta" not in json_response:
             # Special cases - getLegacyResponseData and getPanel
             # Success
             self.last_error_message = None
@@ -180,7 +189,7 @@ class Qualtrics(object):
         """ Creates a new Panel in the Qualtrics System and returns the id of the new panel
         https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#createPanel_2.5
 
-        :param LibraryID: 	The library id you want to create the panel in
+        :param LibraryID:   The library id you want to create the panel in
         :param Name: The name of the new panel
         :return: PanelID of new panel, None if error occurs
         """
@@ -217,14 +226,14 @@ class Qualtrics(object):
         https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#addRecipient_2.5
 
         :param LibraryID: The library the recipient belongs to
-        :param PanelID: 	The panel to add the recipient
-        :param FirstName:  	The first name
-        :param LastName: 	The last name
-        :param Email:  	The email address
-        :param ExternalDataRef: 	The external data reference
-        :param Language: 	The language code
-        :param ED:  	The embedded data (dictionary)
-        :return: 	The Recipient ID or None
+        :param PanelID:     The panel to add the recipient
+        :param FirstName:   The first name
+        :param LastName:    The last name
+        :param Email:   The email address
+        :param ExternalDataRef:     The external data reference
+        :param Language:    The language code
+        :param ED:      The embedded data (dictionary)
+        :return:    The Recipient ID or None
         """
         if not self.request("addRecipient",
                             LibraryID=LibraryID,
@@ -280,6 +289,64 @@ class Qualtrics(object):
             return None
         return self.json_response["Result"]["EmailDistributionID"]
 
+    def sendSurveyToPanel(self, SurveyID, SendDate, SentFromAddress, FromEmail, FromName, Subject, MessageID, MessageLibraryID, PanelID, PanelLibraryID, LinkType, **kwargs):
+        """ Sends a survey through the Qualtrics mailer to the panel specified.
+        Note that request will be put to queue and emails are not sent immediately (although they usually
+        delivered in a few seconds after this function is complete)
+
+        https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#sendSurveyToIndividual_2.5
+
+        Example response (success):
+        {u'Meta': {u'Status': u'Success', u'Debug': u''},
+        {"Meta":{"Status":"Success","Debug":""},"Result":{"Success":true,"EmailDistributionID":"EMD_6mwSGKmBUiiMHg9","DistributionQueueID":"EMD_6mwSGKmBUiiMHg9"}}
+
+        :param kwargs:
+        :
+        :return: EmailDistributionID
+        """
+        if not self.request("sendSurveyToPanel", 
+                            SurveyID=SurveyID, 
+                            SendDate=SendDate, 
+                            SentFromAddress=SentFromAddress, 
+                            FromEmail=FromEmail, 
+                            FromName=FromName, 
+                            Subject=Subject, 
+                            MessageID=MessageID, 
+                            MessageLibraryID=MessageLibraryID, 
+                            PanelID=PanelID,
+                            PanelLibraryID=PanelLibraryID,
+                            LinkType=LinkType, 
+                             **kwargs):
+            return None
+        return self.json_response["Result"]["EmailDistributionID"]
+
+    def sendReminder(self, ParentEmailDistributionID, SendDate, SentFromAddress, FromEmail, FromName, Subject, MessageID, LibraryID, **kwargs):
+        """ Sends a survey through the Qualtrics mailer to the panel specified.
+        Note that request will be put to queue and emails are not sent immediately (although they usually
+        delivered in a few seconds after this function is complete)
+
+        https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#sendSurveyToIndividual_2.5
+
+        Example response (success):
+        {u'Meta': {u'Status': u'Success', u'Debug': u''},
+        u'Result': {u'DistributionQueueID': u'EMD_e3F0KAIVfzIYw0R', u'EmailDistributionID': u'EMD_e3F0KAIVfzIYw0R', u'Success': True}}
+
+        :param kwargs:
+        :return: EmailDistributionID
+        """
+        if not self.request("sendReminder", 
+                            ParentEmailDistributionID=ParentEmailDistributionID,
+                            SendDate=SendDate, 
+                            SentFromAddress=SentFromAddress, 
+                            FromEmail=FromEmail, 
+                            FromName=FromName, 
+                            Subject=Subject, 
+                            MessageID=MessageID, 
+                            LibraryID=LibraryID, 
+                             **kwargs):
+            return None
+        return self.json_response["Result"]["EmailDistributionID"]
+
     def createDistribution(self, SurveyID, PanelID, Description, PanelLibraryID, **kwargs):
         """ Creates a distribution for survey and a panel. No emails will be sent. Distribution Links can be generated
         later to take the survey.
@@ -288,7 +355,7 @@ class Qualtrics(object):
 
         :param SurveyID:        The parent distribution you are reminding
         :param PanelID:         The panel you want to send to
-        :param Description: 	A description for this distribution
+        :param Description:     A description for this distribution
         :param PanelLibraryID:  The library id for the panel
         :return: The distribution id
         """
@@ -346,8 +413,8 @@ class Qualtrics(object):
 
         https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#importSurvey_2.5
 
-        :param ImportFormat: 	The format of the import: TXT, QSF, DOC, MSQ
-        :param Name: 	The survey name.
+        :param ImportFormat:    The format of the import: TXT, QSF, DOC, MSQ
+        :param Name:    The survey name.
         :param Activate: If FALSE (0) will be created in an Inactive state. If TRUE (1) will be created in an active state.
         :param URL: If present it will import the file from the given URL.
         :param FileContents:
@@ -423,7 +490,7 @@ class Qualtrics(object):
         """ Returns all of the response data for a survey in the original (legacy) data format.
         https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#getLegacyResponseData_2.5
 
-        :param SurveyID: 	The survey you will be getting the responses for.
+        :param SurveyID:    The survey you will be getting the responses for.
         :param kwargs: Additional parameters allowed by getLegacyResponseData API call
         :return:
         """
@@ -486,7 +553,7 @@ class Qualtrics(object):
         :param SurveyID: The ID of the Survey the responses will be connected to.
         :param ResponseSetID: The ID of the response set the responses will be placed in.
         :param FileURL: The location of the CSV file containing the responses to be imported, we only support CSV files from ftp, ftps, http, and https. If you dont specify, it will use php://input from the request body.
-        :param Delimiter: 	Separate values by this character. Default is , (comma)
+        :param Delimiter:   Separate values by this character. Default is , (comma)
         :param Enclosure: Allows a value to contain the delimiter. Default is " (quote)
         :param IgnoreValidation: If set to true (1), we will not validate the responses as we import.
         :param DecimalFormat: Decimals delimiter. Possible values are ,(comma) and .(period)
@@ -579,13 +646,13 @@ class Qualtrics(object):
         """ Gets all the panel members for the given panel
         https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#getPanel_2.5
         :param LibraryID: The library id for this panel
-        :param PanelID:  	The panel id you want to export
+        :param PanelID:     The panel id you want to export
         :param EmbeddedData: A comma separated list of the embedded data keys you want to export. This is only required for a CSV export.
         :param LastRecipientID: The last Recipient ID from a previous API call. Start returning everyone AFTER this Recipient
-        :param NumberOfRecords: 	The number of panel members to return. If not defined will return all of them
-        :param ExportLanguage: 	If 1 the language of each panel member will be exported.
+        :param NumberOfRecords:     The number of panel members to return. If not defined will return all of them
+        :param ExportLanguage:  If 1 the language of each panel member will be exported.
         :param Unsubscribed: If 1 only the unsubscribed panel members will be returned
-        :param Subscribed:	If 1 then only subscribed panel members will be returned
+        :param Subscribed:  If 1 then only subscribed panel members will be returned
         :return: list of panel member as dictionaries
         """
         if not self.request("getPanel",
@@ -628,9 +695,41 @@ class Qualtrics(object):
                 kwargs["ExternalRef"] = headers.index("ExternalRef") + 1
             fp.close()
 
-        result = self.request("importPanel", post_data=CSV, LibraryID=LibraryID, Name=Name, **kwargs)
+        result = self.request("importPanel",post_data=CSV, LibraryID=LibraryID, Name=Name, **kwargs)
         if result is not None:
             return result["Result"]["PanelID"]
+        return None
+
+    def importContacts(self, LibraryID, Name, CSV, **kwargs):
+        """ Imports a csv file as a new panel (optionally it can append to a previously made panel) into the database
+        and returns the panel id.  The csv file can be posted (there is an approximate 8 megabytes limit)  or a url can
+        be given to retrieve the file from a remote server.
+        The csv file must be comma separated using " for encapsulation.
+
+        https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#importContacts_2.5
+
+        :param LibraryID:
+        :param Name:
+        :param CSV: contents of CSV file to be imported
+        :return:
+        """
+
+        if kwargs.get("ColumnHeaders", None) == "1" or kwargs.get("ColumnHeaders", None) == 1:
+            fp = StringIO(CSV)
+            headers = csv.reader(fp).next()
+            if "Email" in headers and "Email" not in kwargs:
+                kwargs["Email"] = headers.index("Email") + 1
+            if "FirstName" in headers and "FirstName" not in kwargs:
+                kwargs["FirstName"] = headers.index("FirstName") + 1
+            if "LastName" in headers and "LastName" not in kwargs:
+                kwargs["LastName"] = headers.index("LastName") + 1
+            if "ExternalRef" in headers and "ExternalRef" not in kwargs:
+                kwargs["ExternalRef"] = headers.index("ExternalRef") + 1
+            fp.close()
+
+        result = self.request("importContacts", Product="TA", post_data=CSV, LibraryID=LibraryID, Name=Name, **kwargs)
+        if result is not None:
+            return result["Result"]["ListID"]
         return None
 
     def importJsonPanel(self, LibraryID, Name, panel, headers=None, **kwargs):
@@ -756,3 +855,105 @@ class Qualtrics(object):
         link = "http://new.qualtrics.com/SE?Q_DL=%s" % link
 
         return link
+
+    def getPanel(self, LibraryID, PanelID, EmbeddedData=None, LastRecipientID=None, NumberOfRecords=None,
+                 ExportLanguage=None, Unsubscribed=None, Subscribed=None, **kwargs):
+        """ Gets all the panel members for the given panel
+        https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#getPanel_2.5
+        :param LibraryID: The library id for this panel
+        :param PanelID:     The panel id you want to export
+        :param EmbeddedData: A comma separated list of the embedded data keys you want to export. This is only required for a CSV export.
+        :param LastRecipientID: The last Recipient ID from a previous API call. Start returning everyone AFTER this Recipient
+        :param NumberOfRecords:     The number of panel members to return. If not defined will return all of them
+        :param ExportLanguage:  If 1 the language of each panel member will be exported.
+        :param Unsubscribed: If 1 only the unsubscribed panel members will be returned
+        :param Subscribed:  If 1 then only subscribed panel members will be returned
+        :return: list of panel member as dictionaries
+        """
+        if not self.request("getPanel",
+                            LibraryID=LibraryID,
+                            PanelID=PanelID,
+                            EmbeddedData=EmbeddedData,
+                            LastRecipientID=LastRecipientID,
+                            NumberOfRecords=NumberOfRecords,
+                            ExportLanguage=ExportLanguage,
+                            Unsubscribed=Unsubscribed,
+                            Subscribed=Subscribed,
+                            **kwargs):
+            return None
+        return self.json_response
+
+    def getListContacts(self, LibraryID, ListID, EmbeddedData=None, ContactHistory=None, LastRecipientID=None, NumberOfRecords=None,
+                 ExportLanguage=None, Unsubscribed=None, Subscribed=None, **kwargs):
+        """ Gets all the list members for the given list
+        :param LibraryID: The library id for this list
+        :param ListID:     The list id you want to export
+        :param EmbeddedData: A comma separated list of the embedded data keys you want to export. This is only required for a CSV export.
+        :param LastRecipientID: The last Recipient ID from a previous API call. Start returning everyone AFTER this Recipient
+        :param NumberOfRecords:     The number of list members to return. If not defined will return all of them
+        :param ExportLanguage:  If 1 the language of each list member will be exported.
+        :param Unsubscribed: If 1 only the unsubscribed list members will be returned
+        :param Subscribed:  If 1 then only subscribed list members will be returned
+        :return: list of list members as dictionaries
+        """
+        if not self.request("getListContacts",
+                            Product='TA',
+                            LibraryID=LibraryID,
+                            ListID=ListID,
+                            EmbeddedData=EmbeddedData,
+                            ContactHistory=ContactHistory,
+                            LastRecipientID=LastRecipientID,
+                            NumberOfRecords=NumberOfRecords,
+                            ExportLanguage=ExportLanguage,
+                            Unsubscribed=Unsubscribed,
+                            Subscribed=Subscribed,
+                            **kwargs):
+            print self.last_error_message
+            return None
+        return self.json_response
+
+    def removeContact(self, LibraryID, ListID, RecipientID, **kwargs):
+        """ Remove contact from the specified list
+        :param LibraryID: The library id for this panel
+        :param ListID:     The list id you want to export
+        :param RecipientID: The id of the contact who is to be removed
+        :return: success or failure
+        """
+        if not self.request("removeContact",
+                            Product='TA',
+                            LibraryID=LibraryID,
+                            ListID=ListID,
+                            RecipientID=RecipientID,
+                            **kwargs):
+            print self.last_error_message
+            return None
+        return self.json_response
+
+    def truncate_contact_list(self, LibraryID, ListID):
+        """ Removes all contacts from list but keeps existing list
+        :param LibraryID: The library id for this panel
+        :param ListID:     The list id you want to export
+        :return success or failure
+        """
+        list_of_contacts = self.getListContacts(LibraryID=LibraryID, ListID=ListID)
+        failures = []
+        if list_of_contacts:
+            for i in list_of_contacts:
+                RecipientID = i['RecipientID']
+                try:
+                    self.removeContact(LibraryID=LibraryID, ListID=ListID, RecipientID=RecipientID)
+                except Exception as e:
+                    # print e
+                    failures.append(RecipientID)
+        if failures:
+            return (True,[])
+        else:
+            return (False, failures)
+
+
+
+
+
+
+
+
