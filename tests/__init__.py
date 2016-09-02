@@ -404,6 +404,12 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
             self.assertEqual(response["Q1"], 1)
             self.assertEqual(response["Q2"], "")
 
+    def test_get_legacy_response_data_wrong_last_response_id(self):
+        responses = self.qualtrics.getLegacyResponseData(SurveyID=self.survey_id, LastResponseID="123")
+        print self.qualtrics.response
+        self.assertEqual(responses, None)
+        self.assertEqual(self.qualtrics.last_error_message, "Invalid request. Missing or invalid parameter LastResponseID.")
+
     def test_get_response(self):
         response = self.qualtrics.getResponse(SurveyID=self.survey_id, ResponseID=self.response_id)
         self.assertIsNotNone(response)
