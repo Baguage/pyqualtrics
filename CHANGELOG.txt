@@ -1,9 +1,11 @@
-0.6.0 (In progress)
+0.7.0 (Planned)
   [+] Added mock.MockQualtrics object (for unit testing code that uses pyqualtrics.Qualtrics class)
+
+0.6.0 (In progress)
   [+] More tests
   [*] importPanel API call is back to normal
   [+] A few more API calls for Research Suite and another product called Target Audience.
-  [+] sendSurveyToPanel, importContacts, getPanel, getListContacts, removeContact API calls
+  [+] getPanels, sendSurveyToPanel, sendReminder, importContacts, getListContacts, removeContact API calls
 
 0.5.1 Hotfix for Ticket #21
   [*] Fix for #21 ConnectionError is not handled properly

@@ -160,6 +160,44 @@ class TestQualtrics(unittest.TestCase):
         self.assertIsNone(self.qualtrics.last_error_message)
         self.assertIsNotNone(self.qualtrics.json_response)
 
+    def test_send_survey_to_panel(self):
+        panel_id = self.qualtrics.createPanel(
+            LibraryID=self.library_id,
+            Name="Test Panel for send_survey_to_panel pyqualtrics (DELETE ME)"
+        )
+        # random_prefix is required because you can't send same survey to the same email twice
+        random_prefix = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
+        recipient_id = self.qualtrics.addRecipient(
+            self.library_id,
+            panel_id,
+            FirstName="Panel",
+            LastName="Subject",
+            Email="PyQualtrics+%s@gmail.com" % random_prefix,
+            ExternalDataRef=None,
+            Language="EN",
+            ED={"SubjectID": "123"}
+        )
+
+        email_distribution_id = self.qualtrics.sendSurveyToPanel(
+            SendDate="2015-12-12 19:48:28",
+            FromEmail="noreply@qemailserver.com",
+            FromName="PyQualtrics Library",
+            MessageID=self.message_id,
+            MessageLibraryID=self.library_id,
+            Subject="Why, hello there - sendSurveyToPanel",
+            SurveyID=self.survey_id,
+            PanelID=panel_id,
+            PanelLibraryID=self.library_id,
+            SentFromAddress=None,
+            LinkType="Multiple",
+        )
+        self.assertIsNotNone(email_distribution_id)
+        self.qualtrics.deletePanel(self.library_id, panel_id)
+
+    def test_get_panels(self):
+        result = self.qualtrics.getPanels(self.library_id)
+        self.assertIsNotNone(result)
+
     def test_panel_errors(self):
         result = self.qualtrics.removeRecipient(LibraryID=self.library_id,
                                                 PanelID="",
@@ -372,6 +410,7 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
         responses = self.qualtrics.getLegacyResponseData(SurveyID=self.survey_id)
         self.assertIsNotNone(responses)
         self.assertEqual(len(responses), 3)
+        print(self.qualtrics.response)
 
         key, response = responses.popitem(last=False)
         self.assertEqual(response["SubjectID"], "PY0001")
@@ -406,7 +445,6 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
 
     def test_get_legacy_response_data_wrong_last_response_id(self):
         responses = self.qualtrics.getLegacyResponseData(SurveyID=self.survey_id, LastResponseID="123")
-        print self.qualtrics.response
         self.assertEqual(responses, None)
         self.assertEqual(self.qualtrics.last_error_message, "Invalid request. Missing or invalid parameter LastResponseID.")
 

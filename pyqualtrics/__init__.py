@@ -61,6 +61,7 @@ class Qualtrics(object):
         self.last_url = None
         self.json_response = None
         self.response = None  # For debugging purpose
+        self.url = None # For debugging purpose
 
     def __str__(self):
         return self.user
@@ -88,11 +89,13 @@ class Qualtrics(object):
         assert Version, (str, unicode)
 
         # Handling for Multi Product API calls
-
-        if (Product == 'RS'):
-            self.url = "https://survey.qualtrics.com/WRAPI/ControlPanel/api.php"
-        elif (Product == 'TA'):
-            self.url = "https://survey.qualtrics.com/WRAPI/Contacts/api.php"
+        if self.url:
+            # Force URL, for use in unittests.
+            url = self.url
+        elif Product == 'RS':
+            url = "https://survey.qualtrics.com/WRAPI/ControlPanel/api.php"
+        elif Product == 'TA':
+            url = "https://survey.qualtrics.com/WRAPI/Contacts/api.php"
         else:
             raise NotImplementedError('Please specify a valid product api')
 
@@ -118,15 +121,15 @@ class Qualtrics(object):
         self.last_status_code = None
         try:
             if post_data:
-                r = requests.post(self.url,
+                r = requests.post(url,
                                   data=post_data,
                                   params=params)
             elif post_files:
-                r = requests.post(self.url,
+                r = requests.post(url,
                                   files=post_files,
                                   params=params)
             else:
-                r = requests.get(self.url,
+                r = requests.get(url,
                                  params=params)
         except (ConnectionError, Timeout, TooManyRedirects, HTTPError) as e:
             # http://docs.python-requests.org/en/master/user/quickstart/#errors-and-exceptions
@@ -146,7 +149,12 @@ class Qualtrics(object):
             self.last_error_message = "API Error: HTTP Code %s (Forbidden)" % r.status_code
             return None
         try:
-            json_response = json.loads(r.text, object_pairs_hook=collections.OrderedDict)
+            if Request == "getLegacyResponseData":
+                # Preserve order of responses and fields in each response using OrderedDict
+                json_response = json.loads(r.text, object_pairs_hook=collections.OrderedDict)
+            else:
+                # Don't not use OrderedDict for simplicity.
+                json_response = json.loads(r.text)
         except ValueError:
             # If the data being deserialized is not a valid JSON document, a ValueError will be raised.
             self.json_response = None
@@ -163,7 +171,7 @@ class Qualtrics(object):
         # Sanity check.
         if (Request == "getLegacyResponseData" or Request == "getPanel" or Request == 
             "getListContacts") and "Meta" not in json_response:
-            # Special cases - getLegacyResponseData and getPanel
+            # Special cases - getLegacyResponseData, getPanel and getListContacts
             # Success
             self.last_error_message = None
             return json_response
@@ -294,12 +302,16 @@ class Qualtrics(object):
         Note that request will be put to queue and emails are not sent immediately (although they usually
         delivered in a few seconds after this function is complete)
 
-        https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#sendSurveyToIndividual_2.5
+        https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#sendSurveyToPanel_2.5
 
         Example response (success):
-        {u'Meta': {u'Status': u'Success', u'Debug': u''},
-        {"Meta":{"Status":"Success","Debug":""},"Result":{"Success":true,"EmailDistributionID":"EMD_6mwSGKmBUiiMHg9","DistributionQueueID":"EMD_6mwSGKmBUiiMHg9"}}
+        {"Meta":{"Status":"Success","Debug":""},
+        "Result":{"Success":true,"EmailDistributionID":"EMD_0DQNoLbdDMeGvK5", "DistributionQueueID":"EMD_0DQNoLbdDMeGvK5"}}
 
+        :param LinkType: The type of link that will be sent out.
+        Individual (default) - one unique link for each recipient will be generated that can be taken one time.
+        Multiple - a unique link is sent out to each recipient that can be taken multiple times.
+        Anonymous - the same generic link is sent to all recipients and can be taken multiple times
         :param kwargs:
         :
         :return: EmailDistributionID
@@ -325,7 +337,7 @@ class Qualtrics(object):
         Note that request will be put to queue and emails are not sent immediately (although they usually
         delivered in a few seconds after this function is complete)
 
-        https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#sendSurveyToIndividual_2.5
+        https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#sendReminder_2.5
 
         Example response (success):
         {u'Meta': {u'Status': u'Success', u'Debug': u''},
@@ -641,6 +653,19 @@ class Qualtrics(object):
             return False
         return True
 
+    def getPanels(self, LibraryID):
+        """ This request returns all the panels contained in the library
+
+        https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#getPanels_2.5
+
+        :param LibraryID: The id of the library that contains the panels
+        :return:
+        """
+        response = self.request("getPanels", LibraryID=LibraryID)
+        if not response:
+            return None
+        return response["Result"]["Panels"]
+
     def getPanel(self, LibraryID, PanelID, EmbeddedData=None, LastRecipientID=None, NumberOfRecords=None,
                  ExportLanguage=None, Unsubscribed=None, Subscribed=None, **kwargs):
         """ Gets all the panel members for the given panel
@@ -695,18 +720,20 @@ class Qualtrics(object):
                 kwargs["ExternalRef"] = headers.index("ExternalRef") + 1
             fp.close()
 
-        result = self.request("importPanel",post_data=CSV, LibraryID=LibraryID, Name=Name, **kwargs)
+        result = self.request("importPanel", post_data=CSV, LibraryID=LibraryID, Name=Name, **kwargs)
         if result is not None:
             return result["Result"]["PanelID"]
         return None
 
     def importContacts(self, LibraryID, Name, CSV, **kwargs):
-        """ Imports a csv file as a new panel (optionally it can append to a previously made panel) into the database
-        and returns the panel id.  The csv file can be posted (there is an approximate 8 megabytes limit)  or a url can
-        be given to retrieve the file from a remote server.
-        The csv file must be comma separated using " for encapsulation.
+        """ Asynchronously imports a csv file into your directory
+        (optionally it can create a new list or append to an existing list).
+         * If the ContactID is specified for the row, it attempts to update the contact; otherwise one is created.
+         * The csv file can be posted (there is an approximate 50 megabyte limit) or a url can be given to retrieve the file from a remote server via http or https.
+         * The csv file must be comma separated using " for encapsulation. It must also contain headers with appropriately-named columns for Email, FirstName, LastName, ExternalRef, Language, and Unsubscribed.
+          * A job id is returned and can be used to check the status of the import using the checkImportContactsStatus API call
 
-        https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#importContacts_2.5
+        https://survey.qualtrics.com/WRAPI/Contacts/docs.php#importContacts_2.3
 
         :param LibraryID:
         :param Name:
@@ -817,8 +844,19 @@ class Qualtrics(object):
 
         return result
 
-
-    def generate_unique_survey_link(self, SurveyID, LibraryID, PanelID, DistributionID, FirstName, LastName, Email, ExternalDataRef="", Language="English", EmbeddedData=None):
+    def generate_unique_survey_link(
+            self,
+            SurveyID,
+            LibraryID,
+            PanelID,
+            DistributionID,
+            FirstName,
+            LastName,
+            Email,
+            ExternalDataRef="",
+            Language="English",
+            EmbeddedData=None
+    ):
         """ Generate unique survey link for a person. Based on a response from Qualtrics Support
         :param SurveyID:
         :param LibraryID:
@@ -856,36 +894,12 @@ class Qualtrics(object):
 
         return link
 
-    def getPanel(self, LibraryID, PanelID, EmbeddedData=None, LastRecipientID=None, NumberOfRecords=None,
-                 ExportLanguage=None, Unsubscribed=None, Subscribed=None, **kwargs):
-        """ Gets all the panel members for the given panel
-        https://survey.qualtrics.com/WRAPI/ControlPanel/docs.php#getPanel_2.5
-        :param LibraryID: The library id for this panel
-        :param PanelID:     The panel id you want to export
-        :param EmbeddedData: A comma separated list of the embedded data keys you want to export. This is only required for a CSV export.
-        :param LastRecipientID: The last Recipient ID from a previous API call. Start returning everyone AFTER this Recipient
-        :param NumberOfRecords:     The number of panel members to return. If not defined will return all of them
-        :param ExportLanguage:  If 1 the language of each panel member will be exported.
-        :param Unsubscribed: If 1 only the unsubscribed panel members will be returned
-        :param Subscribed:  If 1 then only subscribed panel members will be returned
-        :return: list of panel member as dictionaries
-        """
-        if not self.request("getPanel",
-                            LibraryID=LibraryID,
-                            PanelID=PanelID,
-                            EmbeddedData=EmbeddedData,
-                            LastRecipientID=LastRecipientID,
-                            NumberOfRecords=NumberOfRecords,
-                            ExportLanguage=ExportLanguage,
-                            Unsubscribed=Unsubscribed,
-                            Subscribed=Subscribed,
-                            **kwargs):
-            return None
-        return self.json_response
-
     def getListContacts(self, LibraryID, ListID, EmbeddedData=None, ContactHistory=None, LastRecipientID=None, NumberOfRecords=None,
                  ExportLanguage=None, Unsubscribed=None, Subscribed=None, **kwargs):
         """ Gets all the list members for the given list
+
+        https://survey.qualtrics.com/WRAPI/Contacts/docs.php#getListContacts_2.3
+
         :param LibraryID: The library id for this list
         :param ListID:     The list id you want to export
         :param EmbeddedData: A comma separated list of the embedded data keys you want to export. This is only required for a CSV export.
@@ -914,6 +928,9 @@ class Qualtrics(object):
 
     def removeContact(self, LibraryID, ListID, RecipientID, **kwargs):
         """ Remove contact from the specified list
+
+        https://survey.qualtrics.com/WRAPI/Contacts/docs.php#removeContact_2.3
+
         :param LibraryID: The library id for this panel
         :param ListID:     The list id you want to export
         :param RecipientID: The id of the contact who is to be removed
@@ -938,22 +955,14 @@ class Qualtrics(object):
         list_of_contacts = self.getListContacts(LibraryID=LibraryID, ListID=ListID)
         failures = []
         if list_of_contacts:
-            for i in list_of_contacts:
-                RecipientID = i['RecipientID']
+            for contact in list_of_contacts:
+                RecipientID = contact['RecipientID']
                 try:
                     self.removeContact(LibraryID=LibraryID, ListID=ListID, RecipientID=RecipientID)
                 except Exception as e:
                     # print e
                     failures.append(RecipientID)
         if failures:
-            return (True,[])
+            return True, []
         else:
-            return (False, failures)
-
-
-
-
-
-
-
-
+            return False, failures
