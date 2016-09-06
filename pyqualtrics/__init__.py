@@ -19,17 +19,21 @@
 
 import csv
 import json
-from StringIO import StringIO
+from io import StringIO, BytesIO
 from collections import OrderedDict
 import collections
 
 import requests
 import os
+import sys
 
 from requests.exceptions import ConnectionError, Timeout, TooManyRedirects, HTTPError
 
 __version__ = "0.6.0"
-
+if sys.version_info >= (3,0):
+    STR = (str, )
+else:
+    STR = (str, unicode)
 
 class Qualtrics(object):
     """
@@ -55,7 +59,7 @@ class Qualtrics(object):
         self.token = token
         self.default_api_version = api_version
         # Version must be a string, not an integer or float
-        assert self.default_api_version, (str, unicode)
+        assert self.default_api_version, STR
         self.last_error_message = None
         self.last_status_code = None
         self.last_url = None
@@ -86,7 +90,7 @@ class Qualtrics(object):
         """
         Version = kwargs.pop("Version", self.default_api_version)
         # Version must be a string, not an integer or float
-        assert Version, (str, unicode)
+        assert Version, STR
 
         # Handling for Multi Product API calls
         if self.url:
@@ -103,12 +107,15 @@ class Qualtrics(object):
         ed = kwargs.pop("ED", None)
 
         # http://stackoverflow.com/questions/38987/how-can-i-merge-two-python-dictionaries-in-a-single-expression
-        params = dict({"User": self.user,
+        params = {"User": self.user,
                        "Token": self.token,
                        "Format": "JSON",
                        "Version": Version,
                        "Request": Request,
-                       }.items() + kwargs.items())
+                       }
+        # Python 2 and 3 compatible dictionary merge
+        for item in kwargs:
+            params[item] = kwargs[item]
 
         # Format emdedded data properly,
         # for example ED[SubjectID]=CLE10235&ED[Zip]=74534
@@ -614,8 +621,7 @@ class Qualtrics(object):
         if len(responses) < 1:
             return True
         headers = responses[0].keys()
-        buffer = str()
-        fp = StringIO(buffer)
+        fp = StringIO()
         dictwriter = csv.DictWriter(fp, fieldnames=headers)
         dictwriter.writeheader()
         dictwriter.writeheader()
@@ -709,7 +715,7 @@ class Qualtrics(object):
 
         if kwargs.get("ColumnHeaders", None) == "1" or kwargs.get("ColumnHeaders", None) == 1:
             fp = StringIO(CSV)
-            headers = csv.reader(fp).next()
+            headers = next(csv.reader(fp))
             if "Email" in headers and "Email" not in kwargs:
                 kwargs["Email"] = headers.index("Email") + 1
             if "FirstName" in headers and "FirstName" not in kwargs:
@@ -775,8 +781,7 @@ class Qualtrics(object):
         """
         if headers is None:
             headers = ["Email", "FirstName", "LastName", "ExternalRef"]
-        buffer = str()
-        fp = StringIO(buffer)
+        fp = StringIO()
         dictwriter = csv.DictWriter(fp, fieldnames=headers)
         dictwriter.writeheader()
         for subject in panel:
@@ -871,8 +876,8 @@ class Qualtrics(object):
         :return:
         """
         assert isinstance(EmbeddedData, (dict, type(None)))
-        assert isinstance(SurveyID, (str, unicode))
-        assert isinstance(DistributionID, (str, unicode))
+        assert isinstance(SurveyID, STR)
+        assert isinstance(DistributionID, STR)
 
         if EmbeddedData is None:
             EmbeddedData = {}
@@ -922,7 +927,7 @@ class Qualtrics(object):
                             Unsubscribed=Unsubscribed,
                             Subscribed=Subscribed,
                             **kwargs):
-            print self.last_error_message
+            print(self.last_error_message)
             return None
         return self.json_response
 
@@ -942,7 +947,7 @@ class Qualtrics(object):
                             ListID=ListID,
                             RecipientID=RecipientID,
                             **kwargs):
-            print self.last_error_message
+            print(self.last_error_message)
             return None
         return self.json_response
 

@@ -437,7 +437,7 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
         self.assertIsNotNone(responses)
         self.assertEqual(len(responses), 1)
 
-        for survey_session_id, response in responses.iteritems():
+        for survey_session_id, response in iter(responses.items()):
             self.assertEqual(response["SubjectID"], "")
             self.assertEqual(response["Finished"], 0)
             self.assertEqual(response["Q1"], 1)
@@ -665,7 +665,7 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
         # Note that tearDown is called after EACH test
 
         # Remove all surveys with (DELETE ME in their name
-        for survey_id, survey in self.qualtrics.getSurveys().iteritems():
+        for survey_id, survey in iter(self.qualtrics.getSurveys().items()):
             if "(DELETE ME" in survey["SurveyName"]:
                 print("Deleting survey %s" % survey["SurveyName"])
                 self.qualtrics.deleteSurvey(SurveyID=survey_id)
