@@ -16,6 +16,6 @@ if __name__ == "__main__":
 
     qualtrics = Qualtrics(user, token)
     responses = qualtrics.getLegacyResponseData(SurveyID=survey_id)
-    for response_id, response in responses.itemitem():
+    for response_id, response in responses.items():
         print response_id + " - " + response["Finished"]
 
