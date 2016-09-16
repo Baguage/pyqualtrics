@@ -19,7 +19,6 @@
 
 import csv
 import json
-from io import StringIO, BytesIO
 from collections import OrderedDict
 import collections
 
@@ -30,10 +29,16 @@ import sys
 from requests.exceptions import ConnectionError, Timeout, TooManyRedirects, HTTPError
 
 __version__ = "0.6.0"
-if sys.version_info >= (3,0):
+
+if sys.version_info >= (3, 0):
+    # Python 3.5
     STR = (str, )
+    from io import StringIO
 else:
+    # Python 2.7
     STR = (str, unicode)
+    from StringIO import StringIO
+
 
 class Qualtrics(object):
     """
@@ -117,8 +122,8 @@ class Qualtrics(object):
         for item in kwargs:
             params[item] = kwargs[item]
 
-        # Format emdedded data properly,
-        # for example ED[SubjectID]=CLE10235&ED[Zip]=74534
+        # Format embedded data properly,
+        # Example: ED[SubjectID]=CLE10235&ED[Zip]=74534
         if ed is not None:
             for key in ed:
                 params["ED[%s]" % key] = ed[key]
