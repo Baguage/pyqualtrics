@@ -36,6 +36,12 @@ class Qualtrics(object):
     This is representation of Qualtrics REST API
     """
 
+    # Additional options passed to requests.get or request.post
+    # For example, to disable SSL certificate validations, set requests_kwargs to {"verify": False"}
+    # Can also be used to specify custom certificate and so on
+    # http://docs.python-requests.org/en/master/user/advanced/#ssl-cert-verification
+    requests_kwargs = dict()
+
     def __init__(self, user=None, token=None, api_version="2.5"):
         """
         :param user: The user name. If omitted, value of environment variable QUALTRICS_USER will be used.
@@ -123,14 +129,19 @@ class Qualtrics(object):
             if post_data:
                 r = requests.post(url,
                                   data=post_data,
-                                  params=params)
+                                  params=params,
+                                  **self.requests_kwargs)
             elif post_files:
                 r = requests.post(url,
                                   files=post_files,
-                                  params=params)
+                                  params=params,
+                                  **self.requests_kwargs)
             else:
-                r = requests.get(url,
-                                 params=params)
+                r = requests.get(
+                    url,
+                    params=params,
+                    **self.requests_kwargs
+                )
         except (ConnectionError, Timeout, TooManyRedirects, HTTPError) as e:
             # http://docs.python-requests.org/en/master/user/quickstart/#errors-and-exceptions
             # ConnectionError: In the event of a network problem (e.g. DNS failure, refused connection, etc) Requests will raise a ConnectionError exception.

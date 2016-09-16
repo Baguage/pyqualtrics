@@ -21,6 +21,8 @@
 import random
 import string
 
+from requests.exceptions import SSLError
+
 from pyqualtrics import Qualtrics
 import unittest
 import os
@@ -660,6 +662,17 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
         self.assertIsNone(qualtrics.json_response)
         self.assertIsNone(result)
 
+    def test_ssl_error(self):
+        # This only works on Notre Dame VPN
+        qualtrics = Qualtrics(self.user, "123")
+        qualtrics.url = "https://vecnet-ingest.crc.nd.edu/"
+        result = qualtrics.getLegacyResponseData(SurveyID=self.survey_id)
+        self.assertIn("CERTIFICATE_VERIFY_FAILED", qualtrics.last_error_message)
+        qualtrics.requests_kwargs = {"verify": False}
+        result = qualtrics.getLegacyResponseData(SurveyID=self.survey_id)
+        self.assertNotIn("CERTIFICATE_VERIFY_FAILED", qualtrics.last_error_message)
+
+        self.assertFalse(True)
 
     def tearDown(self):
         # Note that tearDown is called after EACH test
