@@ -1,5 +1,6 @@
 0.7.0 (Planned)
   [+] Added mock.MockQualtrics object (for unit testing code that uses pyqualtrics.Qualtrics class)
+  [+] Support for Python 2.7 and Python 3.5
 
 0.6.0 (In progress)
   [+] More tests
