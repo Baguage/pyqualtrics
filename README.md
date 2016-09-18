@@ -48,7 +48,7 @@ QUALTRICS_SURVEY_ID = "SV_8pqqcl4sy2316ZF"
 
 qualtrics = Qualtrics(QUALTRICS_USER, QUALTRICS_TOKEN)
 responses = qualtrics.getLegacyResponseData(SurveyID=QUALTRICS_SURVEY_ID)
-for response_id, response in responses.itemitem():
+for response_id, response in responses.items():
     print response_id + " : " + response["Finished"]
 ```
 
