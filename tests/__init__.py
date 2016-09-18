@@ -412,7 +412,6 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
         responses = self.qualtrics.getLegacyResponseData(SurveyID=self.survey_id)
         self.assertIsNotNone(responses)
         self.assertEqual(len(responses), 3)
-        print(self.qualtrics.response)
 
         key, response = responses.popitem(last=False)
         self.assertEqual(response["SubjectID"], "PY0001")
