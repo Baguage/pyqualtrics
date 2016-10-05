@@ -661,17 +661,7 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
         self.assertIsNone(qualtrics.json_response)
         self.assertIsNone(result)
 
-    def test_ssl_error_1(self):
-        # This only works on Notre Dame VPN
-        qualtrics = Qualtrics(self.user, "123")
-        qualtrics.url = "https://vecnet-ingest.crc.nd.edu/"
-        result = qualtrics.getLegacyResponseData(SurveyID=self.survey_id)
-        self.assertIn("CERTIFICATE_VERIFY_FAILED", qualtrics.last_error_message)
-        qualtrics.requests_kwargs = {"verify": False}
-        result = qualtrics.getLegacyResponseData(SurveyID=self.survey_id)
-        self.assertNotIn("CERTIFICATE_VERIFY_FAILED", qualtrics.last_error_message)
-
-    def test_ssl_error_2(self):
+    def test_ssl_error(self):
         # This may fail is 129.74.247.12 is down or certificate error is corrected
         qualtrics = Qualtrics(self.user, "123")
         qualtrics.url = "https://129.74.247.12/"
