@@ -2,11 +2,12 @@
   [+] Added mock.MockQualtrics object (for unit testing code that uses pyqualtrics.Qualtrics class)
   [+] Support for Python 2.7 and Python 3.5
 
-0.6.0 (In progress)
+0.6.0
   [+] More tests
   [*] importPanel API call is back to normal
   [+] A few more API calls for Research Suite and another product called Target Audience.
   [+] getPanels, sendSurveyToPanel, sendReminder, importContacts, getListContacts, removeContact API calls
+  [+] Added requests_kwargs option passed directly to requests library
 
 0.5.1 Hotfix for Ticket #21
   [*] Fix for #21 ConnectionError is not handled properly

@@ -21,6 +21,8 @@
 import random
 import string
 
+from requests.exceptions import SSLError
+
 from pyqualtrics import Qualtrics
 import unittest
 import os
@@ -410,7 +412,6 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
         responses = self.qualtrics.getLegacyResponseData(SurveyID=self.survey_id)
         self.assertIsNotNone(responses)
         self.assertEqual(len(responses), 3)
-        print(self.qualtrics.response)
 
         key, response = responses.popitem(last=False)
         self.assertEqual(response["SubjectID"], "PY0001")
@@ -659,6 +660,27 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
         self.assertEquals(qualtrics.last_error_message, "Unexpected response from Qualtrics: not a JSON document")
         self.assertIsNone(qualtrics.json_response)
         self.assertIsNone(result)
+
+    def test_ssl_error_1(self):
+        # This only works on Notre Dame VPN
+        qualtrics = Qualtrics(self.user, "123")
+        qualtrics.url = "https://vecnet-ingest.crc.nd.edu/"
+        result = qualtrics.getLegacyResponseData(SurveyID=self.survey_id)
+        self.assertIn("CERTIFICATE_VERIFY_FAILED", qualtrics.last_error_message)
+        qualtrics.requests_kwargs = {"verify": False}
+        result = qualtrics.getLegacyResponseData(SurveyID=self.survey_id)
+        self.assertNotIn("CERTIFICATE_VERIFY_FAILED", qualtrics.last_error_message)
+
+    def test_ssl_error_2(self):
+        # This may fail is 129.74.247.12 is down or certificate error is corrected
+        qualtrics = Qualtrics(self.user, "123")
+        qualtrics.url = "https://129.74.247.12/"
+        result = qualtrics.getLegacyResponseData(SurveyID=self.survey_id)
+        # Error: hostname '129.74.247.12' doesn't match either of '*.vecnet.org', 'vecnet.org'
+        self.assertIn("129.74.247.12", qualtrics.last_error_message)
+        qualtrics.requests_kwargs = {"verify": False}
+        result = qualtrics.getLegacyResponseData(SurveyID=self.survey_id)
+        self.assertNotIn("CERTIFICATE_VERIFY_FAILED", qualtrics.last_error_message)
 
 
     def tearDown(self):

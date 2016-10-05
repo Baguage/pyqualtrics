@@ -4,6 +4,7 @@ Checklist for new release
 3. Update version in setup.py
 4. Push all changes to github
 5. Test installation on a different machine
+`python setup.py install`
 6. Run unittests on a different machine
 `python setup.py test`
 7. Make a release/tag
