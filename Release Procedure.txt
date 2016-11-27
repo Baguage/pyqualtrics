@@ -3,8 +3,13 @@ Checklist for new release
 2. Update CHANGELOG.txt
 3. Update version in setup.py
 4. Push all changes to github
-5. Test installation on a different machine
-`python setup.py install`
+5. Test installation on a different machine in a fresh virtual environment
+```bash
+mkvirtualenv qualtrics
+python setup.py install
+deactivate
+rmvirtualenv qualtrics
+```
 6. Run unittests on a different machine
 `python setup.py test`
 7. Make a release/tag
