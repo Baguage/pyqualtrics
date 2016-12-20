@@ -457,6 +457,11 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
         self.assertEqual(response["Q1"], 1)
         self.assertEqual(response["Q2"], 3)
 
+    def test_get_response_wrong_response_id(self):
+        response = self.qualtrics.getResponse(SurveyID=self.survey_id, ResponseID="AAAA")
+        self.assertIsNone(response)
+        self.assertEqual(self.qualtrics.last_error_message, "Invalid request. Missing or invalid parameter ResponseID.")
+
     def test_create_distribution(self):
         panel_id = self.qualtrics.createPanel(self.library_id, "(DELETE ME) Panel for testing distributions")
         distribution_id = self.qualtrics.createDistribution(
