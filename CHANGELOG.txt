@@ -1,6 +1,9 @@
 0.7.0 (Planned)
   [+] Added mock.MockQualtrics object (for unit testing code that uses pyqualtrics.Qualtrics class)
 
+0.6.2
+  [*] Fixed error message in getResponse when dealing with deleted responses
+
 0.6.1
   [*] Fixed problem with installation
 

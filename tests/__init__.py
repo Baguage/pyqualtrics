@@ -462,6 +462,17 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
         self.assertIsNone(response)
         self.assertEqual(self.qualtrics.last_error_message, "Invalid request. Missing or invalid parameter ResponseID.")
 
+    def test_get_response_deleted_response_id(self):
+        # R_1LjSIk8cLV7Y4eD was created and then deleted in survey_id
+        response = self.qualtrics.getResponse(SurveyID=self.survey_id, ResponseID="R_1LjSIk8cLV7Y4eD")
+        self.assertIsNone(response)
+        # Note that Qualtrics behavior might change, but currently there is a difference between
+        # responseIDs that never existed, and deleted response IDs
+        self.assertEqual(
+            "Qualtrics error: ResponseID R_1LjSIk8cLV7Y4eD not in response (probably deleted)",
+            self.qualtrics.last_error_message
+        )
+
     def test_create_distribution(self):
         panel_id = self.qualtrics.createPanel(self.library_id, "(DELETE ME) Panel for testing distributions")
         distribution_id = self.qualtrics.createDistribution(

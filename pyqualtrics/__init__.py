@@ -553,11 +553,12 @@ class Qualtrics(object):
         u'Finished': u'1', u'EmailAddress': u'pyqualtrics+2@gmail.com', u'ResponseSet': u'Default Response Set'}
         """
         response = self.getLegacyResponseData(SurveyID=SurveyID, ResponseID=ResponseID, **kwargs)
-        if not response:
+        # Don't do "if not response:" - because getLegacyResponseData can return empty dict in some cases
+        if response is None:
             return None
         if ResponseID not in response:
             # Should never happen
-            self.last_error_message = "Qualtrics error: ResponseID %s not in response" % ResponseID
+            self.last_error_message = "Qualtrics error: ResponseID %s not in response (probably deleted)" % ResponseID
             return None
         return response[ResponseID]
 
