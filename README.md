@@ -126,4 +126,5 @@ You can re-created Qualtrics survey used for testing using files in qualtrics_fi
 This test requires a partially completed response in "getLegacyData test" survey (SV_8pqqcl4sy2316ZL), 
 and it will closed after 6 month (max timeout allowed by Qualtrics). Thus every 6 month new 
 partially completed response should be created. 
+
 Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male". Don't answer the second question

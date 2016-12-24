@@ -660,6 +660,7 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
         self.qualtrics.url = url
 
     def test_connection_error_invalid_ip_address(self):
+        # This test fails on Linux - apparently 0.0.0.0 is correct address
         url = self.qualtrics.url
         self.qualtrics.url = "http://0.0.0.0"
         responses = self.qualtrics.getLegacyResponseData(SurveyID=self.survey_id)
