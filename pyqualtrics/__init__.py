@@ -159,6 +159,11 @@ class Qualtrics(object):
         if r.status_code == 403:
             self.last_error_message = "API Error: HTTP Code %s (Forbidden)" % r.status_code
             return None
+        if r.status_code == 401 and Request == "getSurvey":
+            # I'm don't know if 401 is returned for requests other than getSurvey
+            self.last_error_message = "API Error: HTTP Code %s (Unauthorized)" % r.status_code
+            return None
+
         try:
             if Request == "getLegacyResponseData":
                 # Preserve order of responses and fields in each response using OrderedDict
