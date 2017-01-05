@@ -697,18 +697,18 @@ class Qualtrics(object):
         :param Subscribed:  If 1 then only subscribed panel members will be returned
         :return: list of panel member as dictionaries
         """
-        if not self.request("getPanel",
-                            LibraryID=LibraryID,
-                            PanelID=PanelID,
-                            EmbeddedData=EmbeddedData,
-                            LastRecipientID=LastRecipientID,
-                            NumberOfRecords=NumberOfRecords,
-                            ExportLanguage=ExportLanguage,
-                            Unsubscribed=Unsubscribed,
-                            Subscribed=Subscribed,
-                            **kwargs):
-            return None
-        return self.json_response
+        return self.request(
+            "getPanel",
+            LibraryID=LibraryID,
+            PanelID=PanelID,
+            EmbeddedData=EmbeddedData,
+            LastRecipientID=LastRecipientID,
+            NumberOfRecords=NumberOfRecords,
+            ExportLanguage=ExportLanguage,
+            Unsubscribed=Unsubscribed,
+            Subscribed=Subscribed,
+            **kwargs
+        )
 
     def importPanel(self, LibraryID, Name, CSV, **kwargs):
         """ Imports a csv file as a new panel (optionally it can append to a previously made panel) into the database

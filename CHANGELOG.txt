@@ -1,6 +1,9 @@
 0.7.0 (Planned)
   [+] Added mock.MockQualtrics object (for unit testing code that uses pyqualtrics.Qualtrics class)
 
+0.6.4
+  [*] Fixed bug with getPanel returning None if there are not participants in that panel
+
 0.6.3
   [*] getSurvey return None if using invalid token
 
