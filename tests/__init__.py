@@ -21,7 +21,7 @@
 import random
 import string
 
-from requests.exceptions import SSLError
+import time
 
 from pyqualtrics import Qualtrics
 import unittest
@@ -694,6 +694,58 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
         result = qualtrics.getSurvey(self.survey_id)
         self.assertEqual(result, None)
         self.assertEqual(qualtrics.last_error_message, "API Error: HTTP Code 401 (Unauthorized)")
+
+    def test_Csv_export_v3(self):
+        responseExportId = self.qualtrics.CreateResponseExport("csv", self.survey_id)
+        self.assertIsNotNone(responseExportId)
+        self.assertIsNone(self.qualtrics.last_error_message)
+        status = "in progress"
+        url = None
+        while status == "in progress":
+            time.sleep(1)
+            status, url =  self.qualtrics.GetResponseExportProgress(responseExportId)
+        self.assertEqual(status, "complete")
+        self.assertIsNotNone(url)
+        self.assertIn("https://", url)
+
+        fp = self.qualtrics.GetResponseExportFile(url)
+        row = fp.next().strip()
+        self.assertEqual(
+            row,
+            "ResponseID,ResponseSet,IPAddress,StartDate,EndDate,RecipientLastName,RecipientFirstName,RecipientEmail,ExternalDataReference,Finished,Status,SubjectID,Q1,Q2,LocationLatitude,LocationLongitude,LocationAccuracy"
+        )
+        row = fp.next()
+        row = fp.next()
+        row = fp.next().strip()
+        self.assertEqual(
+            row,
+            "R_2sPsOsGV0GSrLJb,Default Response Set,129.74.117.12,2016-04-08 12:04:00,2016-04-08 12:04:00,,,,,1,4,PY0001,1,3,,,-1"
+        )
+
+        fp = self.qualtrics.GetResponseExportFile(responseExportId)
+        row = fp.next().strip()
+        self.assertEqual(
+            row,
+            "ResponseID,ResponseSet,IPAddress,StartDate,EndDate,RecipientLastName,RecipientFirstName,RecipientEmail,ExternalDataReference,Finished,Status,SubjectID,Q1,Q2,LocationLatitude,LocationLongitude,LocationAccuracy"
+        )
+        row = fp.next()
+        row = fp.next()
+        row = fp.next().strip()
+        self.assertEqual(
+            row,
+            "R_2sPsOsGV0GSrLJb,Default Response Set,129.74.117.12,2016-04-08 12:04:00,2016-04-08 12:04:00,,,,,1,4,PY0001,1,3,,,-1"
+        )
+
+    def test_CreateResponseExport_fail(self):
+        responseExportId = self.qualtrics.CreateResponseExport("csv", "123")
+        self.assertIsNone(responseExportId)
+        self.assertEqual(self.qualtrics.last_error_message, "Invalid surveyId parameter.")
+
+    def test_CreateResponseExport_fail_2(self):
+        qualtrics = Qualtrics("234", "123")
+        responseExportId = qualtrics.CreateResponseExport("csv", self.survey_id)
+        self.assertIsNone(responseExportId)
+        self.assertEqual(qualtrics.last_error_message, "Unrecognized X-API-TOKEN.")
 
     def tearDown(self):
         # Note that tearDown is called after EACH test

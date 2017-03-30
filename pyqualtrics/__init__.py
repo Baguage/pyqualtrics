@@ -19,6 +19,7 @@
 
 import csv
 import json
+import zipfile
 from StringIO import StringIO
 from collections import OrderedDict
 import collections
@@ -28,7 +29,7 @@ import os
 
 from requests.exceptions import ConnectionError, Timeout, TooManyRedirects, HTTPError
 
-__version__ = "0.6.0"
+__version__ = "0.6.5"
 
 
 class Qualtrics(object):
@@ -77,6 +78,171 @@ class Qualtrics(object):
         # http://stackoverflow.com/questions/1436703/difference-between-str-and-repr-in-python
         # Note this will print Qualtrics token - may be dangerous for logging
         return "%s(%r)" % (self.__class__, self.__dict__)
+
+    def CreateResponseExport(self, format, surveyId, lastResponseId=None, startDate=None, endDate=None, limit=None,
+                             includedQuestionIds=None, useLabels=None, decimalSeparator=None, seenUnansweredRecode=None,
+                             useLocalTime=None):
+        """ API v3
+        Starts an export for a survey in specified format (csv, csv2013, xml, json, spss)
+        https://api.qualtrics.com/docs/csv
+
+        :param format: (required) Export format
+        :type format: str
+        :param surveyId: (required) ID of the survey for which to export responses
+        :type surveyId: str
+        :param lastResponseId: Export all responses received after the specified response
+        :type lastResponseId: str
+        :param startDate: Recorded date range filter (Only exports responses recorded after the specified date.)
+        :type startDate: str datetime
+        :param endDate: Recorded date range filter (Only exports responses recorded before the specified date.)
+        :type endDate: str datetime
+        :param limit: Maximum number of responses exported
+        :type limit: int
+        :param includedQuestionIds: Export only specified questions (JSON array of Question IDs e.g. ["QID1", "QID3", ... , "QID5"])
+        :type includedQuestionIds: str list
+        :param useLabels: Export question labels instead of IDs and data as Choice Text
+        :type useLabels: bool
+        :param decimalSeparator: Decimal separator (Possible values are ,(comma) and .(period))
+        :type decimalSeparator: str
+        :param seenUnansweredRecode: Recode seen but unanswered questions with this value
+        :type seenUnansweredRecode: str
+        :param useLocalTime: Use local timezone to determine response date values
+        :type useLocalTime: bool
+        :return: ID of the response export for GetResponseExportProgress/GetResponseExportFile or None if error occurs
+        """
+        url = "https://survey.qualtrics.com/API/v3/responseexports"
+        data = {
+            "format": format,
+            "surveyId": surveyId
+        }
+        if lastResponseId is not None:
+            data["lastResponseId"] = lastResponseId
+        #     "startDate": startDate,
+        #     "endDate": endDate,
+        #     "limit": limit,
+        #     "includedQuestionIds": includedQuestionIds,
+        #     "useLabels": useLabels,
+        #     "decimalSeparator": decimalSeparator,
+        #     "seenUnansweredRecode": seenUnansweredRecode,
+        #     "useLocalTime": useLocalTime,
+        # }
+        data_json = json.dumps(data)
+        headers = {
+            "X-API-TOKEN": self.token,
+            "Content-Type": "application/json"
+        }
+        self.last_url = url
+        try:
+            response = requests.post(url, data=data_json, headers=headers)
+        except (ConnectionError, Timeout, TooManyRedirects, HTTPError) as e:
+            # http://docs.python-requests.org/en/master/user/quickstart/#errors-and-exceptions
+            # ConnectionError: In the event of a network problem (e.g. DNS failure, refused connection, etc) Requests will raise a ConnectionError exception.
+            # HTTPError: Response.raise_for_status() will raise an HTTPError if the HTTP request returned an unsuccessful status code.
+            # Timeout: If a request times out, a Timeout exception is raised.
+            # TooManyRedirects: If a request exceeds the configured number of maximum redirections, a TooManyRedirects exception is raised.
+            self.last_url = ""
+            self.response = None
+            self.last_error_message = str(e)
+            return None
+
+        if "error" in response.json()["meta"]:
+            self.last_error_message = response.json()["meta"]["error"]["errorMessage"]
+            self.response = response
+            return None
+        responseExportId = response.json()["result"]["id"]
+        self.response = response
+        self.last_error_message = None
+        return responseExportId
+
+    def GetResponseExportProgress(self, responseExportId):
+        """ Retrieve the status of a response export CreateResponseExport
+        https://api.qualtrics.com/docs/get-response-export-progress
+
+        :param responseExportId: ID of the response export, resulted by
+        :type responseExportId: str
+        :return:
+        """
+        url = "https://survey.qualtrics.com/API/v3/responseexports/%s" % responseExportId
+        headers = {
+            "X-API-TOKEN": self.token,
+            "Content-Type": "application/json"
+        }
+        self.last_url = url
+        try:
+            response = requests.get(url, headers=headers)
+        except (ConnectionError, Timeout, TooManyRedirects, HTTPError) as e:
+            # http://docs.python-requests.org/en/master/user/quickstart/#errors-and-exceptions
+            # ConnectionError: In the event of a network problem (e.g. DNS failure, refused connection, etc) Requests will raise a ConnectionError exception.
+            # HTTPError: Response.raise_for_status() will raise an HTTPError if the HTTP request returned an unsuccessful status code.
+            # Timeout: If a request times out, a Timeout exception is raised.
+            # TooManyRedirects: If a request exceeds the configured number of maximum redirections, a TooManyRedirects exception is raised.
+            self.last_url = ""
+            self.response = None
+            self.last_error_message = str(e)
+            return None
+        self.response = response
+        if "error" in response.json()["meta"]:
+            self.last_error_message = response.json()["meta"]["error"]["errorMessage"]
+            return None
+        status = response.json()["result"]["status"]
+        if status == "complete":
+            # Return URL to download the data
+            data = response.json()["result"]["file"]
+        else:
+            # Return Percentage
+            data = response.json()["result"]["percentComplete"]
+        self.last_error_message = None
+
+        return status, data
+
+    def GetResponseExportFile(self, responseExportId):
+        """ Retrieve the response export file after the export is complete
+        https://api.qualtrics.com/docs/get-response-export-file
+        :param responseExportId: The ID given to you after running your Response Export call or URL return by GetResponseExportProgress
+        :type responseExportId: str
+        :return: open file, can be read using .read() function or passed to csv library etc
+        """
+        if "https://" in responseExportId:
+            url = responseExportId
+        else:
+            url = "https://survey.qualtrics.com/API/v3/responseexports/%s/file" % responseExportId
+
+        headers = {
+            "X-API-TOKEN": self.token,
+            "Content-Type": "application/json"
+        }
+        self.last_url = url
+        try:
+            response = requests.get(url, headers=headers)
+        except (ConnectionError, Timeout, TooManyRedirects, HTTPError) as e:
+            # http://docs.python-requests.org/en/master/user/quickstart/#errors-and-exceptions
+            # ConnectionError: In the event of a network problem (e.g. DNS failure, refused connection, etc) Requests will raise a ConnectionError exception.
+            # HTTPError: Response.raise_for_status() will raise an HTTPError if the HTTP request returned an unsuccessful status code.
+            # Timeout: If a request times out, a Timeout exception is raised.
+            # TooManyRedirects: If a request exceeds the configured number of maximum redirections, a TooManyRedirects exception is raised.
+            self.last_url = ""
+            self.response = None
+            self.last_error_message = str(e)
+            return None
+        self.response = response
+        try:
+            if "error" in response.json()["meta"]:
+                self.last_error_message = response.json()["meta"]["error"]["errorMessage"]
+                return None
+        except ValueError:
+            # Not a JSON document - we are good
+            # ValueError: No JSON object could be decoded
+            pass
+        except KeyError:
+            # No errorMessage
+            self.last_error_message = "No errorMessage in JSON response"
+            return None
+        self.last_error_message = None
+
+        iofile = StringIO(response.content)
+        archive = zipfile.ZipFile(iofile)
+        fp = archive.open("getLegacyResponseData test.csv")
+        return fp
 
     def request(self, Request, Product='RS', post_data=None, post_files=None, **kwargs):
         """ Send GET or POST request to Qualtrics API using v2.x format
