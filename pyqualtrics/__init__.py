@@ -79,6 +79,43 @@ class Qualtrics(object):
         # Note this will print Qualtrics token - may be dangerous for logging
         return "%s(%r)" % (self.__class__, self.__dict__)
 
+    def request3(self, url, method="post", data=None):
+        assert method in ("post", "get")
+        self.last_url = url
+        self.response = None
+        self.last_error_message = "Not yet set by request3 function"
+        if data is None:
+            data = dict()
+        data_json = json.dumps(data)
+        headers = {
+            "X-API-TOKEN": self.token,
+            "Content-Type": "application/json"
+        }
+        try:
+            if method == "post":
+                response = requests.post(url, data=data_json, headers=headers)
+            elif method == "get":
+                response = requests.get(url, headers=headers)
+            else:
+                raise NotImplemented("method %s is not supported" % method)
+        except (ConnectionError, Timeout, TooManyRedirects, HTTPError) as e:
+            # http://docs.python-requests.org/en/master/user/quickstart/#errors-and-exceptions
+            # ConnectionError: In the event of a network problem (e.g. DNS failure, refused connection, etc) Requests will raise a ConnectionError exception.
+            # HTTPError: Response.raise_for_status() will raise an HTTPError if the HTTP request returned an unsuccessful status code.
+            # Timeout: If a request times out, a Timeout exception is raised.
+            # TooManyRedirects: If a request exceeds the configured number of maximum redirections, a TooManyRedirects exception is raised.
+            self.last_error_message = str(e)
+            return None
+        self.response = response
+        if response.status_code != 200:
+            # HTTP server error: 404, 500 etc
+            self.last_error_message = "HTTP Response %s" % response.status_code
+            return None
+
+        self.response = response
+        return response
+
+
     def CreateResponseExport(self, format, surveyId, lastResponseId=None, startDate=None, endDate=None, limit=None,
                              includedQuestionIds=None, useLabels=None, decimalSeparator=None, seenUnansweredRecode=None,
                              useLocalTime=None):
@@ -163,24 +200,11 @@ class Qualtrics(object):
         :return:
         """
         url = "https://survey.qualtrics.com/API/v3/responseexports/%s" % responseExportId
-        headers = {
-            "X-API-TOKEN": self.token,
-            "Content-Type": "application/json"
-        }
-        self.last_url = url
-        try:
-            response = requests.get(url, headers=headers)
-        except (ConnectionError, Timeout, TooManyRedirects, HTTPError) as e:
-            # http://docs.python-requests.org/en/master/user/quickstart/#errors-and-exceptions
-            # ConnectionError: In the event of a network problem (e.g. DNS failure, refused connection, etc) Requests will raise a ConnectionError exception.
-            # HTTPError: Response.raise_for_status() will raise an HTTPError if the HTTP request returned an unsuccessful status code.
-            # Timeout: If a request times out, a Timeout exception is raised.
-            # TooManyRedirects: If a request exceeds the configured number of maximum redirections, a TooManyRedirects exception is raised.
-            self.last_url = ""
-            self.response = None
-            self.last_error_message = str(e)
-            return None
-        self.response = response
+        response = self.request3(url, method="get")
+        if not response:
+            # Server or network error
+            return "servfail", self.last_error_message
+
         if "error" in response.json()["meta"]:
             self.last_error_message = response.json()["meta"]["error"]["errorMessage"]
             return None
@@ -238,10 +262,11 @@ class Qualtrics(object):
             self.last_error_message = "No errorMessage in JSON response"
             return None
         self.last_error_message = None
-
         iofile = StringIO(response.content)
         archive = zipfile.ZipFile(iofile)
-        fp = archive.open("getLegacyResponseData test.csv")
+        # https://docs.python.org/2/library/zipfile.html#zipfile.ZipFile.namelist
+        # Assume there is only one file in zip archive returned by Qualtrics
+        fp = archive.open(archive.namelist()[0])
         return fp
 
     def request(self, Request, Product='RS', post_data=None, post_files=None, **kwargs):
