@@ -23,6 +23,7 @@ import zipfile
 from StringIO import StringIO
 from collections import OrderedDict
 import collections
+from zipfile import BadZipfile
 
 import requests
 import os
@@ -36,6 +37,12 @@ class Qualtrics(object):
     """
     This is representation of Qualtrics REST API
     """
+    # Export formats (API v3)
+    CSV_FORMAT = "csv"
+    JSON_FORMAT = "json"
+    CSV2013_FORMAT = "csv2013"
+    XML_FORMAT = "xml"
+    SPSS_FORMAT = "spss"
 
     # Additional options passed to requests.get or request.post
     # For example, to disable SSL certificate validations, set requests_kwargs to {"verify": False"}
@@ -79,8 +86,7 @@ class Qualtrics(object):
         # Note this will print Qualtrics token - may be dangerous for logging
         return "%s(%r)" % (self.__class__, self.__dict__)
 
-    def request3(self, url, method="post", data=None):
-        assert method in ("post", "get")
+    def request3(self, url, method="post", stream=False, data=None):
         self.last_url = url
         self.response = None
         self.last_error_message = "Not yet set by request3 function"
@@ -97,7 +103,7 @@ class Qualtrics(object):
             elif method == "get":
                 response = requests.get(url, headers=headers)
             else:
-                raise NotImplemented("method %s is not supported" % method)
+                raise NotImplementedError("method %s is not supported" % method)
         except (ConnectionError, Timeout, TooManyRedirects, HTTPError) as e:
             # http://docs.python-requests.org/en/master/user/quickstart/#errors-and-exceptions
             # ConnectionError: In the event of a network problem (e.g. DNS failure, refused connection, etc) Requests will raise a ConnectionError exception.
@@ -107,14 +113,24 @@ class Qualtrics(object):
             self.last_error_message = str(e)
             return None
         self.response = response
+        try:
+            self.json_response = response.json()
+        except:
+            self.json_response = None
         if response.status_code != 200:
             # HTTP server error: 404, 500 etc
-            self.last_error_message = "HTTP Response %s" % response.status_code
+            # Apparently http code 401 Unauthorized is returned when incorrect token is provided
+            self.last_error_message = "HTTP Code %s" % response.status_code
+            try:
+                if "error" in self.response.json()["meta"]:
+                    self.last_error_message = self.response.json()["meta"]["error"]["errorMessage"]
+                    return None
+            except:
+                # Mailformed response from the server
+                pass
             return None
 
-        self.response = response
         return response
-
 
     def CreateResponseExport(self, format, surveyId, lastResponseId=None, startDate=None, endDate=None, limit=None,
                              includedQuestionIds=None, useLabels=None, decimalSeparator=None, seenUnansweredRecode=None,
@@ -156,37 +172,25 @@ class Qualtrics(object):
             data["lastResponseId"] = lastResponseId
         #     "startDate": startDate,
         #     "endDate": endDate,
-        #     "limit": limit,
-        #     "includedQuestionIds": includedQuestionIds,
+        if limit is not None:
+            data["limit"] = limit
+        if isinstance(includedQuestionIds, list):
+            includedQuestionIds = json.dumps(includedQuestionIds)
+        if includedQuestionIds:
+            data["includedQuestionIds"] = includedQuestionIds
         #     "useLabels": useLabels,
         #     "decimalSeparator": decimalSeparator,
         #     "seenUnansweredRecode": seenUnansweredRecode,
         #     "useLocalTime": useLocalTime,
         # }
-        data_json = json.dumps(data)
-        headers = {
-            "X-API-TOKEN": self.token,
-            "Content-Type": "application/json"
-        }
-        self.last_url = url
+        response = self.request3(url, method="post", data=data)
+        if response is None:
+            return response
         try:
-            response = requests.post(url, data=data_json, headers=headers)
-        except (ConnectionError, Timeout, TooManyRedirects, HTTPError) as e:
-            # http://docs.python-requests.org/en/master/user/quickstart/#errors-and-exceptions
-            # ConnectionError: In the event of a network problem (e.g. DNS failure, refused connection, etc) Requests will raise a ConnectionError exception.
-            # HTTPError: Response.raise_for_status() will raise an HTTPError if the HTTP request returned an unsuccessful status code.
-            # Timeout: If a request times out, a Timeout exception is raised.
-            # TooManyRedirects: If a request exceeds the configured number of maximum redirections, a TooManyRedirects exception is raised.
-            self.last_url = ""
-            self.response = None
-            self.last_error_message = str(e)
+            responseExportId = response.json()["result"]["id"]
+        except Exception as e:
+            self.last_error_message = "Mailformed response from server: %s" % e
             return None
-
-        if "error" in response.json()["meta"]:
-            self.last_error_message = response.json()["meta"]["error"]["errorMessage"]
-            self.response = response
-            return None
-        responseExportId = response.json()["result"]["id"]
         self.response = response
         self.last_error_message = None
         return responseExportId
@@ -201,13 +205,10 @@ class Qualtrics(object):
         """
         url = "https://survey.qualtrics.com/API/v3/responseexports/%s" % responseExportId
         response = self.request3(url, method="get")
-        if not response:
+        if response is None:
             # Server or network error
             return "servfail", self.last_error_message
 
-        if "error" in response.json()["meta"]:
-            self.last_error_message = response.json()["meta"]["error"]["errorMessage"]
-            return None
         status = response.json()["result"]["status"]
         if status == "complete":
             # Return URL to download the data
@@ -230,44 +231,42 @@ class Qualtrics(object):
             url = responseExportId
         else:
             url = "https://survey.qualtrics.com/API/v3/responseexports/%s/file" % responseExportId
-
-        headers = {
-            "X-API-TOKEN": self.token,
-            "Content-Type": "application/json"
-        }
-        self.last_url = url
+        response = self.request3(url, method="get")
+        if response is None:
+            return None
+        iofile = StringIO(response.content)
         try:
-            response = requests.get(url, headers=headers)
-        except (ConnectionError, Timeout, TooManyRedirects, HTTPError) as e:
-            # http://docs.python-requests.org/en/master/user/quickstart/#errors-and-exceptions
-            # ConnectionError: In the event of a network problem (e.g. DNS failure, refused connection, etc) Requests will raise a ConnectionError exception.
-            # HTTPError: Response.raise_for_status() will raise an HTTPError if the HTTP request returned an unsuccessful status code.
-            # Timeout: If a request times out, a Timeout exception is raised.
-            # TooManyRedirects: If a request exceeds the configured number of maximum redirections, a TooManyRedirects exception is raised.
-            self.last_url = ""
-            self.response = None
+            archive = zipfile.ZipFile(iofile)
+            # https://docs.python.org/2/library/zipfile.html#zipfile.ZipFile.namelist
+            # Assume there is only one file in zip archive returned by Qualtrics
+            fp = archive.open(archive.namelist()[0])
+        except BadZipfile as e:
             self.last_error_message = str(e)
             return None
-        self.response = response
-        try:
-            if "error" in response.json()["meta"]:
-                self.last_error_message = response.json()["meta"]["error"]["errorMessage"]
-                return None
-        except ValueError:
-            # Not a JSON document - we are good
-            # ValueError: No JSON object could be decoded
-            pass
-        except KeyError:
-            # No errorMessage
-            self.last_error_message = "No errorMessage in JSON response"
+        self.last_error_message = None
+        return fp
+
+    def DownloadResponseExportFile(self, responseExportId, filename):
+        """ Download the response export file after the export is complete to the local file system
+        https://api.qualtrics.com/docs/get-response-export-file
+        :param responseExportId: The ID given to you after running your Response Export call or URL return by GetResponseExportProgress
+        :type responseExportId: str
+        :param filename: where to save zip file returned by Qualtrics
+        :type filename: str
+        :return: True is success, None if error
+        """
+        if "https://" in responseExportId:
+            url = responseExportId
+        else:
+            url = "https://survey.qualtrics.com/API/v3/responseexports/%s/file" % responseExportId
+        response = self.request3(url, method="get", stream=True)
+        if response is None:
             return None
         self.last_error_message = None
-        iofile = StringIO(response.content)
-        archive = zipfile.ZipFile(iofile)
-        # https://docs.python.org/2/library/zipfile.html#zipfile.ZipFile.namelist
-        # Assume there is only one file in zip archive returned by Qualtrics
-        fp = archive.open(archive.namelist()[0])
-        return fp
+        with open(filename, "wb") as fp:
+            for chunk in response.iter_content(8192):
+                fp.write(chunk)
+        return True
 
     def request(self, Request, Product='RS', post_data=None, post_files=None, **kwargs):
         """ Send GET or POST request to Qualtrics API using v2.x format
