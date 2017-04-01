@@ -73,6 +73,7 @@ class Qualtrics(object):
         self.last_error_message = None
         self.last_status_code = None
         self.last_url = None
+        self.last_data = None
         self.json_response = None
         self.response = None  # For debugging purpose
         self.url = None # For debugging purpose
@@ -88,6 +89,7 @@ class Qualtrics(object):
 
     def request3(self, url, method="post", stream=False, data=None):
         self.last_url = url
+        self.last_data = None
         self.response = None
         self.last_error_message = "Not yet set by request3 function"
         if data is None:
@@ -99,6 +101,7 @@ class Qualtrics(object):
         }
         try:
             if method == "post":
+                self.last_data = data
                 response = requests.post(url, data=data_json, headers=headers)
             elif method == "get":
                 response = requests.get(url, headers=headers)
@@ -151,7 +154,8 @@ class Qualtrics(object):
         :type endDate: str datetime
         :param limit: Maximum number of responses exported
         :type limit: int
-        :param includedQuestionIds: Export only specified questions (JSON array of Question IDs e.g. ["QID1", "QID3", ... , "QID5"])
+        :param includedQuestionIds: Export only specified questions (JSON array of Question IDs e.g. ["QID1", "QID3", ... , "QID5"]).
+                                    Note that Question IDs are not question labels
         :type includedQuestionIds: str list
         :param useLabels: Export question labels instead of IDs and data as Choice Text
         :type useLabels: bool
@@ -174,8 +178,8 @@ class Qualtrics(object):
         #     "endDate": endDate,
         if limit is not None:
             data["limit"] = limit
-        if isinstance(includedQuestionIds, list):
-            includedQuestionIds = json.dumps(includedQuestionIds)
+        if isinstance(includedQuestionIds, (str, unicode)):
+            includedQuestionIds = json.loads(includedQuestionIds)
         if includedQuestionIds:
             data["includedQuestionIds"] = includedQuestionIds
         #     "useLabels": useLabels,
@@ -208,15 +212,19 @@ class Qualtrics(object):
         if response is None:
             # Server or network error
             return "servfail", self.last_error_message
+        try:
+            status = response.json()["result"]["status"]
 
-        status = response.json()["result"]["status"]
-        if status == "complete":
-            # Return URL to download the data
-            data = response.json()["result"]["file"]
-        else:
-            # Return Percentage
-            data = response.json()["result"]["percentComplete"]
-        self.last_error_message = None
+            if status == "complete":
+                # Return URL to download the data
+                data = response.json()["result"]["file"]
+            else:
+                # Return Percentage
+                data = response.json()["result"]["percentComplete"]
+            self.last_error_message = None
+        except (ValueError, KeyError, TypeError) as e:
+            self.last_error_message = "Mailformed server response: %s" % e
+            return "servfail", self.last_error_message
 
         return status, data
 

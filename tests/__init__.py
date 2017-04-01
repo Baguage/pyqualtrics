@@ -17,7 +17,6 @@
 
 """ Unittests for the pyqualtrics package
 """
-import csv
 import json
 import random
 import string
@@ -25,12 +24,25 @@ import string
 import time
 import zipfile
 
+from requests.exceptions import ConnectionError
+
 from pyqualtrics import Qualtrics
+from mock.mock import patch
 import unittest
 import os
 
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
+
+class MockResponse:
+    def __init__(self, status_code=200, data=""):
+        self.status_code = 200
+        self.data = data
+
+    def json(self):
+        # http://docs.python-requests.org/en/master/user/quickstart/#json-response-content
+        # In case the JSON decoding fails, r.json() raises an exception (ValueError)
+        return json.loads(self.data)
 
 
 class TestQualtrics(unittest.TestCase):
@@ -784,6 +796,36 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
         data_xml = fp.read()
         self.assertIn("<SubjectID>PY0001</SubjectID>", data_xml)
 
+    def test_CreateResponseExport_includedQuestionIds(self):
+        responseExportId = self.qualtrics.CreateResponseExport(
+            Qualtrics.CSV_FORMAT,
+            self.survey_id,
+            includedQuestionIds=['QID1']  # Note that QuestionIDs (QID1) are not the same as question labels (Q1)
+        )
+        self.assertIsNone(self.qualtrics.last_error_message)
+        self.assertIsNotNone(self.qualtrics.last_data),
+        self.assertIsNotNone(responseExportId)
+        status = "in progress"
+        url = None
+        while status == "in progress":
+            time.sleep(1)
+            status, url =  self.qualtrics.GetResponseExportProgress(responseExportId)
+        self.assertEqual(status, "complete")
+        self.assertIsNotNone(url)
+        self.assertIn("https://", url)
+
+        fp = self.qualtrics.GetResponseExportFile(url)
+        self.assertEqual(self.qualtrics.last_error_message, None)
+        self.assertIsNone(self.qualtrics.last_data)
+        self.assertEqual(self.qualtrics.last_url, url)
+        self.assertIsNotNone(fp)
+
+        row = fp.next().strip()
+        self.assertEqual(
+            row,
+            "ResponseID,ResponseSet,IPAddress,StartDate,EndDate,RecipientLastName,RecipientFirstName,RecipientEmail,ExternalDataReference,Finished,Status,Q1,LocationLatitude,LocationLongitude,LocationAccuracy"
+        )
+
     def test_CreateResponseExport_fail(self):
         responseExportId = self.qualtrics.CreateResponseExport("csv", "123")
         self.assertIsNone(responseExportId)
@@ -841,6 +883,31 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
 
     def test_request3_notimplemented(self):
         self.assertRaises(NotImplementedError, self.qualtrics.request3, "123", method="trace")
+
+    @patch("pyqualtrics.requests.get")
+    def test_request3_mock_connection_error(self, get_func):
+        get_func.side_effect = ConnectionError("Connection Error")
+        status, msg = self.qualtrics.GetResponseExportProgress("123")
+        self.assertEqual(msg, "Connection Error")
+        self.assertEqual(status, "servfail")
+
+    @patch("pyqualtrics.requests.get")
+    def test_request3_mailformed_response_from_server_1(self, get_func):
+        mock_response = MockResponse(status_code=400)
+        get_func.return_value = mock_response
+        status, msg = self.qualtrics.GetResponseExportProgress("123")
+        self.assertEqual(msg, "Mailformed server response: No JSON object could be decoded")
+        self.assertEqual(status, "servfail")
+
+    @patch("pyqualtrics.requests.get")
+    def test_request3_mailformed_response_from_server_2(self, get_func):
+        mock_response = MockResponse(status_code=400, data='{"result": ""}')
+
+        get_func.return_value = mock_response
+        status, msg = self.qualtrics.GetResponseExportProgress("123")
+        self.assertEqual(msg, "Mailformed server response: string indices must be integers")
+        self.assertEqual(status, "servfail")
+
 
     def tearDown(self):
         # Note that tearDown is called after EACH test
