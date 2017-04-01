@@ -75,6 +75,7 @@ class Qualtrics(object):
         self.last_url = None
         self.last_data = None
         self.json_response = None
+        self.r = None  # requests.Response object, for debugging purpose
         self.response = None  # For debugging purpose
         self.url = None # For debugging purpose
 
@@ -90,6 +91,7 @@ class Qualtrics(object):
     def request3(self, url, method="post", stream=False, data=None):
         self.last_url = url
         self.last_data = None
+        self.r = None
         self.response = None
         self.last_error_message = "Not yet set by request3 function"
         if data is None:
@@ -102,9 +104,9 @@ class Qualtrics(object):
         try:
             if method == "post":
                 self.last_data = data
-                response = requests.post(url, data=data_json, headers=headers)
+                r = requests.post(url, data=data_json, headers=headers)
             elif method == "get":
-                response = requests.get(url, headers=headers)
+                r = requests.get(url, headers=headers)
             else:
                 raise NotImplementedError("method %s is not supported" % method)
         except (ConnectionError, Timeout, TooManyRedirects, HTTPError) as e:
@@ -115,25 +117,26 @@ class Qualtrics(object):
             # TooManyRedirects: If a request exceeds the configured number of maximum redirections, a TooManyRedirects exception is raised.
             self.last_error_message = str(e)
             return None
-        self.response = response
+        self.r = r
+        self.response = r.text   # Keep this for backward compatibility with previous versions
         try:
-            self.json_response = response.json()
+            self.json_response = r.json()
         except:
             self.json_response = None
-        if response.status_code != 200:
+        if r.status_code != 200:
             # HTTP server error: 404, 500 etc
             # Apparently http code 401 Unauthorized is returned when incorrect token is provided
-            self.last_error_message = "HTTP Code %s" % response.status_code
+            self.last_error_message = "HTTP Code %s" % r.status_code
             try:
-                if "error" in self.response.json()["meta"]:
-                    self.last_error_message = self.response.json()["meta"]["error"]["errorMessage"]
+                if "error" in self.json_response["meta"]:
+                    self.last_error_message = self.json_response["meta"]["error"]["errorMessage"]
                     return None
             except:
                 # Mailformed response from the server
                 pass
             return None
 
-        return response
+        return r
 
     def CreateResponseExport(self, format, surveyId, lastResponseId=None, startDate=None, endDate=None, limit=None,
                              includedQuestionIds=None, useLabels=None, decimalSeparator=None, seenUnansweredRecode=None,

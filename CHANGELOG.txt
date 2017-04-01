@@ -6,7 +6,7 @@
       DownloadResponseExportFile
 
 0.6.4 - 1/5/2017
-  [*] Fixed bug with getPanel returning None if there are not participants in that panel
+  [*] Fixed bug with getPanel returning None if there are no participants in that panel
 
 0.6.3 - 12/24/2016
   [*] getSurvey return None if using invalid token
