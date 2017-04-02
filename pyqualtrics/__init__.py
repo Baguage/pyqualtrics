@@ -249,7 +249,7 @@ class Qualtrics(object):
         try:
             archive = zipfile.ZipFile(iofile)
             # https://docs.python.org/2/library/zipfile.html#zipfile.ZipFile.namelist
-            # Assume there is only one file in zip archive returned by Qualtrics
+            # Assuming there is only one file in zip archive returned by Qualtrics
             fp = archive.open(archive.namelist()[0])
         except BadZipfile as e:
             self.last_error_message = str(e)

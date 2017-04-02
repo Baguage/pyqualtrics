@@ -36,13 +36,14 @@ base_dir = os.path.dirname(os.path.abspath(__file__))
 
 class MockResponse:
     def __init__(self, status_code=200, data=""):
-        self.status_code = 200
-        self.data = data
+        self.status_code = status_code
+        self.text = data
+        self.content = data
 
     def json(self):
         # http://docs.python-requests.org/en/master/user/quickstart/#json-response-content
         # In case the JSON decoding fails, r.json() raises an exception (ValueError)
-        return json.loads(self.data)
+        return json.loads(self.text)
 
 
 class TestQualtrics(unittest.TestCase):
@@ -810,6 +811,7 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
         while status == "in progress":
             time.sleep(1)
             status, url =  self.qualtrics.GetResponseExportProgress(responseExportId)
+
         self.assertEqual(status, "complete")
         self.assertIsNotNone(url)
         self.assertIn("https://", url)
@@ -826,6 +828,68 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
             "ResponseID,ResponseSet,IPAddress,StartDate,EndDate,RecipientLastName,RecipientFirstName,RecipientEmail,ExternalDataReference,Finished,Status,Q1,LocationLatitude,LocationLongitude,LocationAccuracy"
         )
 
+    def test_CreateResponseExport_parameters(self):
+        responseExportId = self.qualtrics.CreateResponseExport(
+            Qualtrics.CSV_FORMAT,
+            self.survey_id,
+            includedQuestionIds='["QID1"]',  # Note that QuestionIDs (QID1) are not the same as question labels (Q1)
+            limit=1,
+            lastResponseId=self.response_id,
+        )
+        self.assertIsNone(self.qualtrics.last_error_message)
+        self.assertIsNotNone(self.qualtrics.last_data),
+        self.assertIsNotNone(responseExportId)
+        status = "in progress"
+        url = None
+        while status == "in progress":
+            time.sleep(1)
+            status, url =  self.qualtrics.GetResponseExportProgress(responseExportId)
+
+        self.assertEqual(status, "complete")
+        self.assertIsNotNone(url)
+        self.assertIn("https://", url)
+
+        fp = self.qualtrics.GetResponseExportFile(url)
+        self.assertEqual(self.qualtrics.last_error_message, None)
+        self.assertIsNone(self.qualtrics.last_data)
+        self.assertEqual(self.qualtrics.last_url, url)
+        self.assertIsNotNone(fp)
+
+        row = fp.next().strip()
+        self.assertEqual(
+            row,
+            "ResponseID,ResponseSet,IPAddress,StartDate,EndDate,RecipientLastName,RecipientFirstName,RecipientEmail,ExternalDataReference,Finished,Status,Q1,LocationLatitude,LocationLongitude,LocationAccuracy"
+        )
+        row = fp.next()
+        row = fp.next()
+        row = fp.next().strip()
+        self.assertEqual(
+            row,
+            "R_Xj2NRqjlA2oxBgB,Default Response Set,,2016-04-19 23:19:41,2016-04-19 23:19:54,,,,,1,1,1,41.642807006836,-86.075302124023,-1"
+        )
+        try:
+            row = fp.next()
+        except StopIteration:
+            pass
+        else:
+            self.fail("More that one response is returned")
+
+    @patch("pyqualtrics.requests.get")
+    def test_GetResponseExportProgress_percentComplete(self, get_func):
+        # Using mock get, because it is difficult to get in progress status reliably
+        data='{"meta": {"httpStatus": "200 - OK", "requestId": "f53927df-d5d8-45eb-b6e3-de5542c7cd94"}, '\
+             '"result": {"status": "in progress", "percentComplete": 57.0,'\
+             '"file": "https://survey.qualtrics.com/API/v3/responseexports/ES_btvq507dddg6dcnvsq18tn0tl/file"}}'
+
+        get_func.return_value = MockResponse(
+            status_code=200,
+            data=data
+        )
+        status, msg = self.qualtrics.GetResponseExportProgress("sdfasdfdsf")
+        self.assertEqual(status, "in progress")
+        self.assertEqual(msg, 57.0)
+        self.assertEqual(self.qualtrics.last_error_message, None)
+
     def test_CreateResponseExport_fail(self):
         responseExportId = self.qualtrics.CreateResponseExport("csv", "123")
         self.assertIsNone(responseExportId)
@@ -837,17 +901,46 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
         self.assertIsNone(responseExportId)
         self.assertEqual(qualtrics.last_error_message, "Unrecognized X-API-TOKEN.")
 
+    @patch("pyqualtrics.requests.post")
+    def test_CreateResponseExport_mailformed_response(self, get_func):
+        get_func.return_value = MockResponse(status_code=200, data="")
+        qualtrics = Qualtrics("234", "123")
+        responseExportId = qualtrics.CreateResponseExport("csv", self.survey_id)
+        self.assertIsNone(responseExportId)
+        self.assertEqual(
+            qualtrics.last_error_message,
+            "Mailformed response from server: No JSON object could be decoded"
+        )
+
     def test_GetResponseExportProgress_fail(self):
         status, msg = self.qualtrics.GetResponseExportProgress("sdfasdfdsf")
         self.assertEqual(status, "servfail")
         self.assertEqual(msg, "Export id not found")
         self.assertEqual(self.qualtrics.last_error_message, "Export id not found")
 
-    def test_CreateResponseExport_fail_2(self):
+    def test_GetResponseExportProgress_fail_2(self):
         qualtrics = Qualtrics("234", "123")
-        responseExportId = qualtrics.CreateResponseExport("csv", self.survey_id)
-        self.assertIsNone(responseExportId)
+        status, msg = qualtrics.GetResponseExportProgress("sdfasdfdsf")
+        self.assertEqual(status, "servfail")
+        self.assertEqual(msg, "Unrecognized X-API-TOKEN.")
         self.assertEqual(qualtrics.last_error_message, "Unrecognized X-API-TOKEN.")
+
+    @patch("pyqualtrics.requests.get")
+    def test_GetResponseExportProgress_fail_3(self, get_func):
+        get_func.return_value = MockResponse(status_code=200, data="")
+        status, msg = self.qualtrics.GetResponseExportProgress("sdfasdfdsf")
+        self.assertEqual(status, "servfail")
+        self.assertEqual(msg, "Mailformed server response: No JSON object could be decoded")
+        self.assertEqual(self.qualtrics.last_error_message, "Mailformed server response: No JSON object could be decoded")
+
+    @patch("pyqualtrics.requests.get")
+    def test_GetResponseExportProgress_fail_4(self, get_func):
+        get_func.return_value = MockResponse(status_code=200, data='{"result": ""}')
+        status, msg = self.qualtrics.GetResponseExportProgress("sdfasdfdsf")
+        self.assertEqual(status, "servfail")
+        self.assertEqual(msg, "Mailformed server response: string indices must be integers")
+        self.assertEqual(self.qualtrics.last_error_message, "Mailformed server response: string indices must be integers")
+
 
     def test_GetResponseExportFile_fail(self):
         result = self.qualtrics.GetResponseExportFile("sdfasdfdsf")
@@ -859,6 +952,14 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
         result = qualtrics.GetResponseExportFile("kkkkkkkk")
         self.assertEqual(result, None)
         self.assertEqual(qualtrics.last_error_message, "Unrecognized X-API-TOKEN.")
+
+    @patch("pyqualtrics.requests.get")
+    def test_GetResponseExportFile_fail_bad_zip_file(self, get_func):
+        get_func.return_value = MockResponse(status_code=200, data="")
+        qualtrics = Qualtrics("234", "123")
+        responseExportId = qualtrics.GetResponseExportFile("kkkkkkkk")
+        self.assertIsNone(responseExportId)
+        self.assertEqual(qualtrics.last_error_message, "File is not a zip file")
 
     def test_DownloadResponseExportFileCsv(self):
         responseExportId = self.qualtrics.CreateResponseExport(Qualtrics.CSV2013_FORMAT, self.survey_id)
@@ -881,6 +982,11 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
             archive = zipfile.ZipFile(fp)
             self.assertEqual(archive.namelist()[0], "getLegacyResponseData test.csv")
 
+    def test_DownloadResponseExportFile_fail(self):
+        result = self.qualtrics.DownloadResponseExportFile("bla-blah", "bla.zip")
+        self.assertEqual(self.qualtrics.last_error_message, "Export id not found")
+        self.assertEqual(result, None)
+
     def test_request3_notimplemented(self):
         self.assertRaises(NotImplementedError, self.qualtrics.request3, "123", method="trace")
 
@@ -891,23 +997,33 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
         self.assertEqual(msg, "Connection Error")
         self.assertEqual(status, "servfail")
 
+    # @patch("pyqualtrics.requests.get")
+    # def test_request3_mailformed_response_from_server_1(self, get_func):
+    #     mock_response = MockResponse(status_code=400)
+    #     get_func.return_value = mock_response
+    #     status, msg = self.qualtrics.GetResponseExportProgress("123")
+    #     self.assertEqual(msg, "Mailformed server response: No JSON object could be decoded")
+    #     self.assertEqual(status, "servfail")
+    #
+    # @patch("pyqualtrics.requests.get")
+    # def test_request3_mailformed_response_from_server_2(self, get_func):
+    #     mock_response = MockResponse(status_code=400, data='{"result": ""}')
+    #
+    #     get_func.return_value = mock_response
+    #     status, msg = self.qualtrics.GetResponseExportProgress("123")
+    #     self.assertEqual(msg, "Mailformed server response: string indices must be integers")
+    #     self.assertEqual(status, "servfail")
+
     @patch("pyqualtrics.requests.get")
-    def test_request3_mailformed_response_from_server_1(self, get_func):
+    def test_request3_mailformed_response_from_server_3(self, get_func):
         mock_response = MockResponse(status_code=400)
         get_func.return_value = mock_response
-        status, msg = self.qualtrics.GetResponseExportProgress("123")
-        self.assertEqual(msg, "Mailformed server response: No JSON object could be decoded")
-        self.assertEqual(status, "servfail")
-
-    @patch("pyqualtrics.requests.get")
-    def test_request3_mailformed_response_from_server_2(self, get_func):
-        mock_response = MockResponse(status_code=400, data='{"result": ""}')
-
-        get_func.return_value = mock_response
-        status, msg = self.qualtrics.GetResponseExportProgress("123")
-        self.assertEqual(msg, "Mailformed server response: string indices must be integers")
-        self.assertEqual(status, "servfail")
-
+        response = self.qualtrics.request3("123", method="get")
+        self.assertEqual(
+            self.qualtrics.last_error_message,
+            "HTTP Code 400"
+        )
+        self.assertEqual(response, None)
 
     def tearDown(self):
         # Note that tearDown is called after EACH test
