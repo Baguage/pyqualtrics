@@ -185,7 +185,8 @@ class Qualtrics(object):
             includedQuestionIds = json.loads(includedQuestionIds)
         if includedQuestionIds:
             data["includedQuestionIds"] = includedQuestionIds
-        #     "useLabels": useLabels,
+        if useLabels is True:
+            data["useLabels"] = True
         #     "decimalSeparator": decimalSeparator,
         #     "seenUnansweredRecode": seenUnansweredRecode,
         #     "useLocalTime": useLocalTime,

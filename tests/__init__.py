@@ -874,6 +874,45 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
         else:
             self.fail("More that one response is returned")
 
+    def test_CreateResponseExport_useLabels(self):
+        responseExportId = self.qualtrics.CreateResponseExport(
+            Qualtrics.CSV_FORMAT,
+            self.survey_id,
+            includedQuestionIds='["QID1"]',  # Note that QuestionIDs (QID1) are not the same as question labels (Q1)
+            useLabels=True,
+        )
+        self.assertIsNone(self.qualtrics.last_error_message)
+        self.assertIsNotNone(self.qualtrics.last_data),
+        self.assertIsNotNone(responseExportId)
+        status = "in progress"
+        url = None
+        while status == "in progress":
+            time.sleep(1)
+            status, url =  self.qualtrics.GetResponseExportProgress(responseExportId)
+
+        self.assertEqual(status, "complete")
+        self.assertIsNotNone(url)
+        self.assertIn("https://", url)
+
+        fp = self.qualtrics.GetResponseExportFile(url)
+        self.assertEqual(self.qualtrics.last_error_message, None)
+        self.assertIsNone(self.qualtrics.last_data)
+        self.assertEqual(self.qualtrics.last_url, url)
+        self.assertIsNotNone(fp)
+
+        row = fp.next().strip()
+        self.assertEqual(
+            row,
+            "ResponseID,ResponseSet,IPAddress,StartDate,EndDate,RecipientLastName,RecipientFirstName,RecipientEmail,ExternalDataReference,Finished,Status,Q1,LocationLatitude,LocationLongitude,LocationAccuracy"
+        )
+        row = fp.next()
+        row = fp.next()
+        row = fp.next().strip()
+        self.assertEqual(
+            row,
+            "R_2sPsOsGV0GSrLJb,Default Response Set,129.74.117.12,2016-04-08 12:04:00,2016-04-08 12:04:00,,,,,1,4,Male,,,-1"
+        )
+
     @patch("pyqualtrics.requests.get")
     def test_GetResponseExportProgress_percentComplete(self, get_func):
         # Using mock get, because it is difficult to get in progress status reliably
