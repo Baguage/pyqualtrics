@@ -581,18 +581,20 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
         self.assertIsNone(self.qualtrics.last_error_message)
 
     def test_import_responses_and_update_embedded_data(self):
-        survey_id = self.qualtrics.importSurvey(
-                ImportFormat="QSF",
-                Name="Test importResponses (DELETE ME - 4)",
-                FileContents=open(os.path.join(base_dir, "pyqualtrics-ed.qsf")).read()
-        )
+        with open(os.path.join(base_dir, "pyqualtrics-ed.qsf")) as fp:
+            survey_id = self.qualtrics.importSurvey(
+                    ImportFormat="QSF",
+                    Name="Test importResponses (DELETE ME - 4)",
+                    FileContents=fp.read()
+            )
         self.assertIsNotNone(survey_id)
         self.assertIsNone(self.qualtrics.last_error_message)
 
-        result = self.qualtrics.importResponses(
-            survey_id,
-            FileContents=open(os.path.join(base_dir, "response.csv")).read()
-        )
+        with open(os.path.join(base_dir, "response.csv")) as fp:
+            result = self.qualtrics.importResponses(
+                survey_id,
+                FileContents=fp.read()
+            )
 
         self.assertIsNone(self.qualtrics.last_error_message)
         self.assertTrue(result)
