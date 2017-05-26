@@ -2,7 +2,7 @@ Pyqualtrics
 Unofficial python SDK for Qualtrics API
 https://github.com/Baguage/pyqualtrics
 
-Copyright 2015-2016 Alex Vyushkov
+Copyright 2015-2017 Alex Vyushkov
 
 Contributors:
   Alex Vyushkov

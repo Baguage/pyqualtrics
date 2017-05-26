@@ -19,8 +19,10 @@
 
 import csv
 import json
+import zipfile
 from collections import OrderedDict
 import collections
+from zipfile import BadZipfile
 
 import requests
 import os
@@ -28,7 +30,7 @@ import sys
 
 from requests.exceptions import ConnectionError, Timeout, TooManyRedirects, HTTPError
 
-__version__ = "0.6.0"
+__version__ = "0.6.5"
 
 if sys.version_info >= (3, 0):
     # Python 3.5
@@ -44,6 +46,12 @@ class Qualtrics(object):
     """
     This is representation of Qualtrics REST API
     """
+    # Export formats (API v3)
+    CSV_FORMAT = "csv"
+    JSON_FORMAT = "json"
+    CSV2013_FORMAT = "csv2013"
+    XML_FORMAT = "xml"
+    SPSS_FORMAT = "spss"
 
     # Additional options passed to requests.get or request.post
     # For example, to disable SSL certificate validations, set requests_kwargs to {"verify": False"}
@@ -74,7 +82,9 @@ class Qualtrics(object):
         self.last_error_message = None
         self.last_status_code = None
         self.last_url = None
+        self.last_data = None
         self.json_response = None
+        self.r = None  # requests.Response object, for debugging purpose
         self.response = None  # For debugging purpose
         self.url = None # For debugging purpose
 
@@ -86,6 +96,198 @@ class Qualtrics(object):
         # http://stackoverflow.com/questions/1436703/difference-between-str-and-repr-in-python
         # Note this will print Qualtrics token - may be dangerous for logging
         return "%s(%r)" % (self.__class__, self.__dict__)
+
+    def request3(self, url, method="post", stream=False, data=None):
+        self.last_url = url
+        self.last_data = None
+        self.r = None
+        self.response = None
+        self.last_error_message = "Not yet set by request3 function"
+        if data is None:
+            data = dict()
+        data_json = json.dumps(data)
+        headers = {
+            "X-API-TOKEN": self.token,
+            "Content-Type": "application/json"
+        }
+        try:
+            if method == "post":
+                self.last_data = data
+                r = requests.post(url, data=data_json, headers=headers)
+            elif method == "get":
+                r = requests.get(url, headers=headers)
+            else:
+                raise NotImplementedError("method %s is not supported" % method)
+        except (ConnectionError, Timeout, TooManyRedirects, HTTPError) as e:
+            # http://docs.python-requests.org/en/master/user/quickstart/#errors-and-exceptions
+            # ConnectionError: In the event of a network problem (e.g. DNS failure, refused connection, etc) Requests will raise a ConnectionError exception.
+            # HTTPError: Response.raise_for_status() will raise an HTTPError if the HTTP request returned an unsuccessful status code.
+            # Timeout: If a request times out, a Timeout exception is raised.
+            # TooManyRedirects: If a request exceeds the configured number of maximum redirections, a TooManyRedirects exception is raised.
+            self.last_error_message = str(e)
+            return None
+        self.r = r
+        self.response = r.text   # Keep this for backward compatibility with previous versions
+        try:
+            self.json_response = r.json()
+        except:
+            self.json_response = None
+        if r.status_code != 200:
+            # HTTP server error: 404, 500 etc
+            # Apparently http code 401 Unauthorized is returned when incorrect token is provided
+            self.last_error_message = "HTTP Code %s" % r.status_code
+            try:
+                if "error" in self.json_response["meta"]:
+                    self.last_error_message = self.json_response["meta"]["error"]["errorMessage"]
+                    return None
+            except:
+                # Mailformed response from the server
+                pass
+            return None
+
+        return r
+
+    def CreateResponseExport(self, format, surveyId, lastResponseId=None, startDate=None, endDate=None, limit=None,
+                             includedQuestionIds=None, useLabels=None, decimalSeparator=None, seenUnansweredRecode=None,
+                             useLocalTime=None):
+        """ API v3
+        Starts an export for a survey in specified format (csv, csv2013, xml, json, spss)
+        https://api.qualtrics.com/docs/csv
+
+        :param format: (required) Export format
+        :type format: str
+        :param surveyId: (required) ID of the survey for which to export responses
+        :type surveyId: str
+        :param lastResponseId: Export all responses received after the specified response
+        :type lastResponseId: str
+        :param startDate: Recorded date range filter (Only exports responses recorded after the specified date.)
+        :type startDate: str datetime
+        :param endDate: Recorded date range filter (Only exports responses recorded before the specified date.)
+        :type endDate: str datetime
+        :param limit: Maximum number of responses exported
+        :type limit: int
+        :param includedQuestionIds: Export only specified questions (JSON array of Question IDs e.g. ["QID1", "QID3", ... , "QID5"]).
+                                    Note that Question IDs are not question labels
+        :type includedQuestionIds: str list
+        :param useLabels: Export question labels instead of IDs and data as Choice Text
+        :type useLabels: bool
+        :param decimalSeparator: Decimal separator (Possible values are ,(comma) and .(period))
+        :type decimalSeparator: str
+        :param seenUnansweredRecode: Recode seen but unanswered questions with this value
+        :type seenUnansweredRecode: str
+        :param useLocalTime: Use local timezone to determine response date values
+        :type useLocalTime: bool
+        :return: ID of the response export for GetResponseExportProgress/GetResponseExportFile or None if error occurs
+        """
+        url = "https://survey.qualtrics.com/API/v3/responseexports"
+        data = {
+            "format": format,
+            "surveyId": surveyId
+        }
+        if lastResponseId is not None:
+            data["lastResponseId"] = lastResponseId
+        #     "startDate": startDate,
+        #     "endDate": endDate,
+        if limit is not None:
+            data["limit"] = limit
+        if isinstance(includedQuestionIds, (str, unicode)):
+            includedQuestionIds = json.loads(includedQuestionIds)
+        if includedQuestionIds:
+            data["includedQuestionIds"] = includedQuestionIds
+        if useLabels is True:
+            data["useLabels"] = True
+        #     "decimalSeparator": decimalSeparator,
+        #     "seenUnansweredRecode": seenUnansweredRecode,
+        #     "useLocalTime": useLocalTime,
+        # }
+        response = self.request3(url, method="post", data=data)
+        if response is None:
+            return response
+        try:
+            responseExportId = response.json()["result"]["id"]
+        except Exception as e:
+            self.last_error_message = "Mailformed response from server: %s" % e
+            return None
+        self.response = response
+        self.last_error_message = None
+        return responseExportId
+
+    def GetResponseExportProgress(self, responseExportId):
+        """ Retrieve the status of a response export CreateResponseExport
+        https://api.qualtrics.com/docs/get-response-export-progress
+
+        :param responseExportId: ID of the response export, resulted by
+        :type responseExportId: str
+        :return:
+        """
+        url = "https://survey.qualtrics.com/API/v3/responseexports/%s" % responseExportId
+        response = self.request3(url, method="get")
+        if response is None:
+            # Server or network error
+            return "servfail", self.last_error_message
+        try:
+            status = response.json()["result"]["status"]
+
+            if status == "complete":
+                # Return URL to download the data
+                data = response.json()["result"]["file"]
+            else:
+                # Return Percentage
+                data = response.json()["result"]["percentComplete"]
+            self.last_error_message = None
+        except (ValueError, KeyError, TypeError) as e:
+            self.last_error_message = "Mailformed server response: %s" % e
+            return "servfail", self.last_error_message
+
+        return status, data
+
+    def GetResponseExportFile(self, responseExportId):
+        """ Retrieve the response export file after the export is complete
+        https://api.qualtrics.com/docs/get-response-export-file
+        :param responseExportId: The ID given to you after running your Response Export call or URL return by GetResponseExportProgress
+        :type responseExportId: str
+        :return: open file, can be read using .read() function or passed to csv library etc
+        """
+        if "https://" in responseExportId:
+            url = responseExportId
+        else:
+            url = "https://survey.qualtrics.com/API/v3/responseexports/%s/file" % responseExportId
+        response = self.request3(url, method="get")
+        if response is None:
+            return None
+        iofile = StringIO(response.content)
+        try:
+            archive = zipfile.ZipFile(iofile)
+            # https://docs.python.org/2/library/zipfile.html#zipfile.ZipFile.namelist
+            # Assuming there is only one file in zip archive returned by Qualtrics
+            fp = archive.open(archive.namelist()[0])
+        except BadZipfile as e:
+            self.last_error_message = str(e)
+            return None
+        self.last_error_message = None
+        return fp
+
+    def DownloadResponseExportFile(self, responseExportId, filename):
+        """ Download the response export file after the export is complete to the local file system
+        https://api.qualtrics.com/docs/get-response-export-file
+        :param responseExportId: The ID given to you after running your Response Export call or URL return by GetResponseExportProgress
+        :type responseExportId: str
+        :param filename: where to save zip file returned by Qualtrics
+        :type filename: str
+        :return: True is success, None if error
+        """
+        if "https://" in responseExportId:
+            url = responseExportId
+        else:
+            url = "https://survey.qualtrics.com/API/v3/responseexports/%s/file" % responseExportId
+        response = self.request3(url, method="get", stream=True)
+        if response is None:
+            return None
+        self.last_error_message = None
+        with open(filename, "wb") as fp:
+            for chunk in response.iter_content(8192):
+                fp.write(chunk)
+        return True
 
     def request(self, Request, Product='RS', post_data=None, post_files=None, **kwargs):
         """ Send GET or POST request to Qualtrics API using v2.x format
@@ -171,6 +373,11 @@ class Qualtrics(object):
         if r.status_code == 403:
             self.last_error_message = "API Error: HTTP Code %s (Forbidden)" % r.status_code
             return None
+        if r.status_code == 401 and Request == "getSurvey":
+            # I'm don't know if 401 is returned for requests other than getSurvey
+            self.last_error_message = "API Error: HTTP Code %s (Unauthorized)" % r.status_code
+            return None
+
         try:
             if Request == "getLegacyResponseData":
                 # Preserve order of responses and fields in each response using OrderedDict
@@ -565,11 +772,12 @@ class Qualtrics(object):
         u'Finished': u'1', u'EmailAddress': u'pyqualtrics+2@gmail.com', u'ResponseSet': u'Default Response Set'}
         """
         response = self.getLegacyResponseData(SurveyID=SurveyID, ResponseID=ResponseID, **kwargs)
-        if not response:
+        # Don't do "if not response:" - because getLegacyResponseData can return empty dict in some cases
+        if response is None:
             return None
         if ResponseID not in response:
             # Should never happen
-            self.last_error_message = "Qualtrics error: ResponseID %s not in response" % ResponseID
+            self.last_error_message = "Qualtrics error: ResponseID %s not in response (probably deleted)" % ResponseID
             return None
         return response[ResponseID]
 
@@ -702,18 +910,18 @@ class Qualtrics(object):
         :param Subscribed:  If 1 then only subscribed panel members will be returned
         :return: list of panel member as dictionaries
         """
-        if not self.request("getPanel",
-                            LibraryID=LibraryID,
-                            PanelID=PanelID,
-                            EmbeddedData=EmbeddedData,
-                            LastRecipientID=LastRecipientID,
-                            NumberOfRecords=NumberOfRecords,
-                            ExportLanguage=ExportLanguage,
-                            Unsubscribed=Unsubscribed,
-                            Subscribed=Subscribed,
-                            **kwargs):
-            return None
-        return self.json_response
+        return self.request(
+            "getPanel",
+            LibraryID=LibraryID,
+            PanelID=PanelID,
+            EmbeddedData=EmbeddedData,
+            LastRecipientID=LastRecipientID,
+            NumberOfRecords=NumberOfRecords,
+            ExportLanguage=ExportLanguage,
+            Unsubscribed=Unsubscribed,
+            Subscribed=Subscribed,
+            **kwargs
+        )
 
     def importPanel(self, LibraryID, Name, CSV, **kwargs):
         """ Imports a csv file as a new panel (optionally it can append to a previously made panel) into the database

@@ -37,7 +37,7 @@ click "Qualtrics Ids").
 
 # Usage example
 
-This is how you can get list of all responses to a survey. 
+This is how you can get list of all responses to a survey (using API v2). 
 
 ```python
 from pyqualtrics import Qualtrics
@@ -54,10 +54,6 @@ for response_id, response in responses.items():
 
 getLegacyResponseData function returns an OrderedDict of all survey responses.
 
-# Documentation
-
-Full documenation is not yet available.
-
 # Bugs and requests
 
 Qualtrics support is awesome, but this is not official Qualtrics SDK and they DO NOT support this piece of software.
@@ -73,12 +69,19 @@ If API call was not successful (return None or False), additional information ab
 
 `qualtrics.response` : server response as a text string. Can be useful for debugging if server did not return JSON response for some reason
 
+`qualtrics.r` : server response as a requests.Response object.
+
 `qualtrics.json_response` : python dictionary, JSON response returned by the server. Can be None (if response is not a JSON document) 
 
-`qualtrics.last_url` : URL constructed by the library
+`qualtrics.last_url` : URL constructed by the library (for both v3 and v2 API calls)
+
+`qualtrics.last_data` : Body or last POST request (v3 calls only)
 
 ```python
-xml = qualtrics.getSurvey(id="SV_8pqqcl4sy2316ZF")
+from pyqualtrics import Qualtrics
+
+qualtrics = Qualtrics(user="user", token="token")
+xml = qualtrics.getSurvey(SurveyID="SV_8pqqcl4sy2316ZF")
 if not xml:
    print "Error getting survey: %s" % qualtrics.last_error_message
 ```
@@ -126,4 +129,5 @@ You can re-created Qualtrics survey used for testing using files in qualtrics_fi
 This test requires a partially completed response in "getLegacyData test" survey (SV_8pqqcl4sy2316ZL), 
 and it will closed after 6 month (max timeout allowed by Qualtrics). Thus every 6 month new 
 partially completed response should be created. 
+
 Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male". Don't answer the second question

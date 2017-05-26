@@ -2,7 +2,23 @@
   [+] Added mock.MockQualtrics object (for unit testing code that uses pyqualtrics.Qualtrics class)
   [+] Support for Python 2.7 and Python 3.5
 
-0.6.0
+0.6.5 - 4/1/2017
+  [+] Added v3 API calls: CreateResponseExport, GetResponseExportProgress, GetResponseExportFile and
+      DownloadResponseExportFile
+
+0.6.4 - 1/5/2017
+  [*] Fixed bug with getPanel returning None if there are no participants in that panel
+
+0.6.3 - 12/24/2016
+  [*] getSurvey return None if using invalid token
+
+0.6.2 - 12/20/2016
+  [*] Fixed error message in getResponse when dealing with deleted responses
+
+0.6.1 - 11/27/2016
+  [*] Fixed problem with installation
+
+0.6.0- 09/24/2016
   [+] More tests
   [*] importPanel API call is back to normal
   [+] A few more API calls for Research Suite and another product called Target Audience.
@@ -13,7 +29,7 @@
   [*] Fix for #21 ConnectionError is not handled properly
   [-] importPanel function is currently broken, due to change on API end apparently
 
-0.5.0
+0.5.0 - 06/16/2016
   [*] More tests
   [+] updateResponseEmbeddedData function
   [+] importResponses function

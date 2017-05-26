@@ -25,11 +25,10 @@
 # ez_setup.use_setuptools(version="18.2")
 
 from setuptools import setup, find_packages
-from pyqualtrics import __version__
 
 setup(
     name="pyqualtrics",
-    version=__version__,
+    version="0.6.5",
     author="Alex Vyushkov",
     author_email="pyqualtrics@gmail.com",
     description="Unofficial python SDK for Qualtrics API",
@@ -47,7 +46,7 @@ setup(
     },
     test_suite="tests",
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "License :: OSI Approved :: Apache Software License",
         "Intended Audience :: Developers",
         "Operating System :: OS Independent",
