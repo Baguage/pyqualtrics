@@ -395,7 +395,8 @@ class TestQualtrics(unittest.TestCase):
 
         self.assertIsNotNone(survey_id)
         self.assertIsNone(self.qualtrics.last_error_message)
-
+        # Pause for 1 second - let Qualtrics update their cache
+        time.sleep(1)
         self.assertIn(survey_id, self.qualtrics.getSurveys())
         self.assertIsNone(self.qualtrics.last_error_message)
 
