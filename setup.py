@@ -28,7 +28,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="pyqualtrics",
-    version="0.6.5",
+    version="0.6.6",
     author="Alex Vyushkov",
     author_email="pyqualtrics@gmail.com",
     description="Unofficial python SDK for Qualtrics API",
