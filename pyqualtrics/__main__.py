@@ -22,6 +22,14 @@ import os
 from pyqualtrics import Qualtrics
 
 
+try:
+    # Python 2.7
+    input = raw_input
+except NameError:
+    # Python 3.5
+    pass
+
+
 def main(argv):
     kwargs = {}
     iterator = iter(argv)
@@ -34,11 +42,11 @@ def main(argv):
 
     user = None
     if "QUALTRICS_USER" not in os.environ:
-        user = raw_input("Enter Qualtrics username: ")
+        user = input("Enter Qualtrics username: ")
 
     token = None
     if "QUALTRICS_TOKEN" not in os.environ:
-        token = raw_input("Enter Qualtrics token: ")
+        token = input("Enter Qualtrics token: ")
 
     qualtrics = Qualtrics(user, token)
     method = getattr(qualtrics, command)
