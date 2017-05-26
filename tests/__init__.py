@@ -364,11 +364,12 @@ class TestQualtrics(unittest.TestCase):
             "Invalid request. Missing or invalid parameter ImportFormat.")
 
     def test_import_survey(self):
-        survey_id = self.qualtrics.importSurvey(
-                ImportFormat="QSF",
-                Name="Test survey import (DELETE ME - 3)",
-                FileContents=open(os.path.join(base_dir, "pyqualtrics.qsf")).read()
-        )
+        with open(os.path.join(base_dir, "pyqualtrics.qsf")) as fp:
+            survey_id = self.qualtrics.importSurvey(
+                    ImportFormat="QSF",
+                    Name="Test survey import (DELETE ME - 3)",
+                    FileContents=fp.read()
+            )
         self.assertIsNotNone(survey_id)
         self.assertIsNone(self.qualtrics.last_error_message)
 
@@ -532,7 +533,7 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
         )
 
         self.assertIsNotNone(link2)
-        self.assertNotEquals(link1, link2)
+        self.assertNotEqual(link1, link2)
         self.assertIsNone(self.qualtrics.last_error_message)
 
         link3 = self.qualtrics.generate_unique_survey_link(
@@ -546,8 +547,8 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
             EmbeddedData={"SubjectID": "TEST0001"}
         )
         self.assertIsNotNone(link3)
-        self.assertNotEquals(link1, link3)
-        self.assertNotEquals(link2, link3)
+        self.assertNotEqual(link1, link3)
+        self.assertNotEqual(link2, link3)
         self.assertIsNone(self.qualtrics.last_error_message)
 
         link4 = self.qualtrics.generate_unique_survey_link(
@@ -620,11 +621,12 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
         self.qualtrics.deleteSurvey(survey_id)
 
     def test_import_responses_as_dict(self):
-        survey_id = self.qualtrics.importSurvey(
-                ImportFormat="QSF",
-                Name="Test responses_as_dict import (DELETE ME - 4)",
-                FileContents=open(os.path.join(base_dir, "pyqualtrics.qsf")).read()
-        )
+        with open(os.path.join(base_dir, "pyqualtrics.qsf")) as fp:
+            survey_id = self.qualtrics.importSurvey(
+                    ImportFormat="QSF",
+                    Name="Test responses_as_dict import (DELETE ME - 4)",
+                    FileContents=fp.read()
+            )
         self.assertIsNotNone(survey_id)
         self.assertIsNone(self.qualtrics.last_error_message)
 
