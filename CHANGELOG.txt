@@ -1,6 +1,9 @@
 0.7.0 (Planned)
   [+] Added mock.MockQualtrics object (for unit testing code that uses pyqualtrics.Qualtrics class)
 
+0.6.6 - 5/25/2017
+  [+] Support for Python 2.7 and Python 3.5
+
 0.6.5 - 4/1/2017
   [+] Added v3 API calls: CreateResponseExport, GetResponseExportProgress, GetResponseExportFile and
       DownloadResponseExportFile
