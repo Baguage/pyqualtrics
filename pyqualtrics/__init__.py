@@ -17,6 +17,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import io
 import csv
 import json
 import zipfile
@@ -30,12 +31,13 @@ import sys
 
 from requests.exceptions import ConnectionError, Timeout, TooManyRedirects, HTTPError
 
-__version__ = "0.6.5"
+__version__ = "0.6.6"
 
 if sys.version_info >= (3, 0):
     # Python 3.5
     STR = (str, )
     from io import StringIO
+    from io import BytesIO
 else:
     # Python 2.7
     STR = (str, unicode)
@@ -190,7 +192,7 @@ class Qualtrics(object):
         #     "endDate": endDate,
         if limit is not None:
             data["limit"] = limit
-        if isinstance(includedQuestionIds, (str, unicode)):
+        if isinstance(includedQuestionIds, STR):
             includedQuestionIds = json.loads(includedQuestionIds)
         if includedQuestionIds:
             data["includedQuestionIds"] = includedQuestionIds
@@ -255,12 +257,23 @@ class Qualtrics(object):
         response = self.request3(url, method="get")
         if response is None:
             return None
-        iofile = StringIO(response.content)
+
+        try:
+            # Python 3.5
+            iofile = BytesIO(response.content)
+        except:
+            # Python 2.7
+            iofile = StringIO(response.content)
         try:
             archive = zipfile.ZipFile(iofile)
             # https://docs.python.org/2/library/zipfile.html#zipfile.ZipFile.namelist
             # Assuming there is only one file in zip archive returned by Qualtrics
-            fp = archive.open(archive.namelist()[0])
+            fh = archive.open(archive.namelist()[0], mode="r")
+
+            # Converting binary file stream to text stream, so it can be fed to csv module etc
+            # Note this may not work for large csv files that do not fit in memory
+            # Not sure how typical is that with Qualtrics surveys, though
+            fp = io.TextIOWrapper(fh)
         except BadZipfile as e:
             self.last_error_message = str(e)
             return None

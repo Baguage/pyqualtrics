@@ -689,7 +689,7 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
         qualtrics = Qualtrics(self.user, "123")
         qualtrics.url = "https://google.com"
         result = qualtrics.getLegacyResponseData(SurveyID=self.survey_id)
-        self.assertEquals(qualtrics.last_error_message, "Unexpected response from Qualtrics: not a JSON document")
+        self.assertEqual(qualtrics.last_error_message, "Unexpected response from Qualtrics: not a JSON document")
         self.assertIsNone(qualtrics.json_response)
         self.assertIsNone(result)
 
@@ -727,28 +727,28 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
         self.assertEqual(self.qualtrics.last_error_message, None)
         self.assertIsNotNone(fp)
 
-        row = fp.next().strip()
+        row = next(fp).strip()
         self.assertEqual(
             row,
             "ResponseID,ResponseSet,IPAddress,StartDate,EndDate,RecipientLastName,RecipientFirstName,RecipientEmail,ExternalDataReference,Finished,Status,SubjectID,Q1,Q2,LocationLatitude,LocationLongitude,LocationAccuracy"
         )
-        row = fp.next()
-        row = fp.next()
-        row = fp.next().strip()
+        row = next(fp)
+        row = next(fp)
+        row = next(fp).strip()
         self.assertEqual(
             row,
             "R_2sPsOsGV0GSrLJb,Default Response Set,129.74.117.12,2016-04-08 12:04:00,2016-04-08 12:04:00,,,,,1,4,PY0001,1,3,,,-1"
         )
 
         fp = self.qualtrics.GetResponseExportFile(responseExportId)
-        row = fp.next().strip()
+        row = next(fp).strip()
         self.assertEqual(
             row,
             "ResponseID,ResponseSet,IPAddress,StartDate,EndDate,RecipientLastName,RecipientFirstName,RecipientEmail,ExternalDataReference,Finished,Status,SubjectID,Q1,Q2,LocationLatitude,LocationLongitude,LocationAccuracy"
         )
-        row = fp.next()
-        row = fp.next()
-        row = fp.next().strip()
+        row = next(fp)
+        row = next(fp)
+        row = next(fp).strip()
         self.assertEqual(
             row,
             "R_2sPsOsGV0GSrLJb,Default Response Set,129.74.117.12,2016-04-08 12:04:00,2016-04-08 12:04:00,,,,,1,4,PY0001,1,3,,,-1"
@@ -822,7 +822,7 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
         self.assertEqual(self.qualtrics.last_url, url)
         self.assertIsNotNone(fp)
 
-        row = fp.next().strip()
+        row = next(fp).strip()
         self.assertEqual(
             row,
             "ResponseID,ResponseSet,IPAddress,StartDate,EndDate,RecipientLastName,RecipientFirstName,RecipientEmail,ExternalDataReference,Finished,Status,Q1,LocationLatitude,LocationLongitude,LocationAccuracy"
@@ -855,20 +855,20 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
         self.assertEqual(self.qualtrics.last_url, url)
         self.assertIsNotNone(fp)
 
-        row = fp.next().strip()
+        row = next(fp).strip()
         self.assertEqual(
             row,
             "ResponseID,ResponseSet,IPAddress,StartDate,EndDate,RecipientLastName,RecipientFirstName,RecipientEmail,ExternalDataReference,Finished,Status,Q1,LocationLatitude,LocationLongitude,LocationAccuracy"
         )
-        row = fp.next()
-        row = fp.next()
-        row = fp.next().strip()
+        row = next(fp)
+        row = next(fp)
+        row = next(fp).strip()
         self.assertEqual(
             row,
             "R_Xj2NRqjlA2oxBgB,Default Response Set,,2016-04-19 23:19:41,2016-04-19 23:19:54,,,,,1,1,1,41.642807006836,-86.075302124023,-1"
         )
         try:
-            row = fp.next()
+            row = next(fp)
         except StopIteration:
             pass
         else:
@@ -900,14 +900,14 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
         self.assertEqual(self.qualtrics.last_url, url)
         self.assertIsNotNone(fp)
 
-        row = fp.next().strip()
+        row = next(fp).strip()
         self.assertEqual(
             row,
             "ResponseID,ResponseSet,IPAddress,StartDate,EndDate,RecipientLastName,RecipientFirstName,RecipientEmail,ExternalDataReference,Finished,Status,Q1,LocationLatitude,LocationLongitude,LocationAccuracy"
         )
-        row = fp.next()
-        row = fp.next()
-        row = fp.next().strip()
+        row = next(fp)
+        row = next(fp)
+        row = next(fp).strip()
         self.assertEqual(
             row,
             "R_2sPsOsGV0GSrLJb,Default Response Set,129.74.117.12,2016-04-08 12:04:00,2016-04-08 12:04:00,,,,,1,4,Male,,,-1"
@@ -946,10 +946,7 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
         qualtrics = Qualtrics("234", "123")
         responseExportId = qualtrics.CreateResponseExport("csv", self.survey_id)
         self.assertIsNone(responseExportId)
-        self.assertEqual(
-            qualtrics.last_error_message,
-            "Mailformed response from server: No JSON object could be decoded"
-        )
+        self.assertIn("Mailformed response from server:", qualtrics.last_error_message)
 
     def test_GetResponseExportProgress_fail(self):
         status, msg = self.qualtrics.GetResponseExportProgress("sdfasdfdsf")
@@ -969,8 +966,8 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
         get_func.return_value = MockResponse(status_code=200, data="")
         status, msg = self.qualtrics.GetResponseExportProgress("sdfasdfdsf")
         self.assertEqual(status, "servfail")
-        self.assertEqual(msg, "Mailformed server response: No JSON object could be decoded")
-        self.assertEqual(self.qualtrics.last_error_message, "Mailformed server response: No JSON object could be decoded")
+        self.assertIn("Mailformed server response:", msg)
+        self.assertIn("Mailformed server response:", self.qualtrics.last_error_message)
 
     @patch("pyqualtrics.requests.get")
     def test_GetResponseExportProgress_fail_4(self, get_func):
@@ -1016,7 +1013,7 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
         result = self.qualtrics.DownloadResponseExportFile(url, "test.zip")
         self.assertEqual(self.qualtrics.last_error_message, None)
         self.assertTrue(result)
-        with open("test.zip") as fp:
+        with open("test.zip", "rb") as fp:
             # Make sure this is correct zip file
             archive = zipfile.ZipFile(fp)
             self.assertEqual(archive.namelist()[0], "getLegacyResponseData test.csv")
