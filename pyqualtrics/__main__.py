@@ -21,6 +21,12 @@ import sys
 import os
 from pyqualtrics import Qualtrics
 
+if os.path.exists('.env'):
+    for line in open(".env"):
+        var = line.strip().split('=')
+        if len(var) == 2:
+            os.environ[var[0]] = var[1]
+
 
 try:
     # Python 2.7

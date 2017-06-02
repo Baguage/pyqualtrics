@@ -43,6 +43,11 @@ else:
     STR = (str, unicode)
     from StringIO import StringIO
 
+if os.path.exists('.env'):
+    for line in open(".env"):
+        var = line.strip().split('=')
+        if len(var) == 2:
+            os.environ[var[0]] = var[1]
 
 class Qualtrics(object):
     """
