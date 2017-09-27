@@ -47,14 +47,20 @@ class MockResponse:
 
 
 class TestQualtrics(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.user = os.environ["QUALTRICS_USER"]
+        cls.token = os.environ["QUALTRICS_TOKEN"]
+        cls.qualtrics = Qualtrics(cls.user, cls.token)
+
     def setUp(self):
-        self.user = os.environ["QUALTRICS_USER"]
-        self.token = os.environ["QUALTRICS_TOKEN"]
+        # self.user = os.environ["QUALTRICS_USER"]
+        # self.token = os.environ["QUALTRICS_TOKEN"]
         self.library_id = os.environ["QUALTRICS_LIBRARY_ID"]
         self.survey_id = os.environ.get("QUALTRICS_SURVEY_ID", None)
         self.message_id = os.environ.get("QUALTRICS_MESSAGE_ID", None)
         self.response_id = os.environ.get("QUALTRICS_RESPONSE_ID", None)
-        self.qualtrics = Qualtrics(self.user, self.token)
+        # self.qualtrics = Qualtrics(self.user, self.token)
 
     def test_str(self):
         self.assertEqual(str(self.qualtrics), self.user)
@@ -717,6 +723,11 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
         self.assertEqual(result, None)
         self.assertEqual(qualtrics.last_error_message, "API Error: HTTP Code 401 (Unauthorized)")
 
+    def test_get_survey_no_permissions(self):
+        result = self.qualtrics.getSurvey("SV_8FTHsivtrc1eG2h")
+        self.assertEqual(result, None)
+        self.assertEqual(self.qualtrics.last_error_message, "This survey is Unknown to this user account.")
+
     def test_CreateResponseExportCsv(self):
         responseExportId = self.qualtrics.CreateResponseExport(Qualtrics.CSV_FORMAT, self.survey_id)
         self.assertIsNone(self.qualtrics.last_error_message)
@@ -1070,13 +1081,15 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
 
     def tearDown(self):
         # Note that tearDown is called after EACH test
+        pass
 
+    @classmethod
+    def tearDownClass(cls):
         # Remove all surveys with (DELETE ME in their name
-        for survey_id, survey in iter(self.qualtrics.getSurveys().items()):
+        for survey_id, survey in iter(cls.qualtrics.getSurveys().items()):
             if "(DELETE ME" in survey["SurveyName"]:
                 print("Deleting survey %s" % survey["SurveyName"])
-                self.qualtrics.deleteSurvey(SurveyID=survey_id)
-
+                cls.qualtrics.deleteSurvey(SurveyID=survey_id)
 
 if __name__ == "__main__":
     unittest.main()

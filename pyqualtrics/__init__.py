@@ -29,6 +29,8 @@ import requests
 import os
 import sys
 
+import xml.etree.ElementTree as ET
+
 from requests.exceptions import ConnectionError, Timeout, TooManyRedirects, HTTPError
 
 __version__ = "0.6.6"
@@ -394,6 +396,26 @@ class Qualtrics(object):
         if r.status_code == 401 and Request == "getSurvey":
             # I'm don't know if 401 is returned for requests other than getSurvey
             self.last_error_message = "API Error: HTTP Code %s (Unauthorized)" % r.status_code
+            return None
+        # Apparently, getSurvey now returns error 500 and error message in XML format:
+        # <XML>
+        # 	<Meta>
+        # 		<Status>Error</Status>
+        # 		<RequestType>getSurvey</RequestType>
+        # 		<ErrorCode>500</ErrorCode>
+        # 		<QualtricsErrorCode>ESRV18</QualtricsErrorCode>
+        # 		<ErrorMessage>This survey is Unknown to this user account.</ErrorMessage>
+        # 		<Debug></Debug>
+        # 	</Meta>
+        # 	<Result></Result>
+        # </XML>
+        if r.status_code == 500 and Request == "getSurvey":
+            root = ET.fromstring(r.text)
+            try:
+                self.last_error_message = root.find("Meta").find("ErrorMessage").text
+            except AttributeError:
+                # 'NoneType' object has no attribute 'text'
+                self.last_error_message = "Internal server error"
             return None
 
         try:

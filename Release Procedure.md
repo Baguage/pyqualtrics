@@ -4,7 +4,7 @@
 2. Run unittests for python 3.5
 3. Update CHANGELOG.txt
 4. Update version in setup.py
-5. Push all changes to github
+5. Push all changes to GitHub
 6. Test installation on a different machine in a fresh virtual environment
 ```bash
 cd /tmp
