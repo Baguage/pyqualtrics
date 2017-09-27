@@ -94,8 +94,8 @@ class TestQualtrics(unittest.TestCase):
             LibraryID=self.library_id,
             Name="Test Panel created by pyqualtrics library (DELETE ME)"
         )
-        self.assertIsNotNone(panel_id)
         self.assertIsNone(self.qualtrics.last_error_message)
+        self.assertIsNotNone(panel_id)
         self.assertIsNotNone(self.qualtrics.json_response)
 
         count = self.qualtrics.getPanelMemberCount(self.library_id, panel_id)
@@ -688,15 +688,14 @@ Use link https://nd.qualtrics.com/jfe/form/SV_8pqqcl4sy2316ZL and answer "Male".
         self.qualtrics.url = url
 
     def test_connection_error_invalid_ip_address(self):
-        # This test fails on Linux - apparently 0.0.0.0 is correct address
         url = self.qualtrics.url
-        self.qualtrics.url = "http://0.0.0.0"
+        self.qualtrics.url = "http://0.0.0.777"
         responses = self.qualtrics.getLegacyResponseData(SurveyID=self.survey_id)
+        # Restore API URL for tearDown() function
+        self.qualtrics.url = url
         self.assertIsNone(responses)
         self.assertIsNone(self.qualtrics.last_status_code)
         self.assertIn("Max retries exceeded with url", self.qualtrics.last_error_message)
-        # Restore API URL for tearDown() function
-        self.qualtrics.url = url
 
     def test_not_a_json_document_google_com(self):
         qualtrics = Qualtrics(self.user, "123")
