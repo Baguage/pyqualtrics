@@ -24,12 +24,17 @@ import string
 import time
 import zipfile
 
+import sys
 from requests.exceptions import ConnectionError
-
-from pyqualtrics import Qualtrics
-from mock.mock import patch
 import unittest
 import os
+import six
+
+from pyqualtrics import Qualtrics
+if sys.version_info <= (3, 0):
+    from mock.mock import patch
+else:
+    from unittest.mock import patch
 
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -422,6 +427,7 @@ class TestQualtrics(unittest.TestCase):
     def test_single_response_html(self):
         result = self.qualtrics.getSingleResponseHTML(SurveyID=self.survey_id, ResponseID=self.response_id)
         self.assertIsNotNone(result)
+        self.assertTrue(isinstance(result, six.string_types))
         self.assertTrue("DOCTYPE html PUBLIC" in result)
 
     def test_get_legacy_response_data(self):
