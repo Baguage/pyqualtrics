@@ -1,6 +1,9 @@
 Unreleased
   [+] Added mock.MockQualtrics object (for unit testing code that uses pyqualtrics.Qualtrics class)
 
+0.6.8 - 2017-12-29
+  [*] Updated classifiers in setup.py to reflect Python 3.5 support
+
 0.6.7 - 2017-09-26
   [+] Added error messages for getSurvey if it fails
 

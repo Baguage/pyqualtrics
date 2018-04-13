@@ -12,7 +12,7 @@ My ultimate goal is cover all API calls. Some of them (subscribe, createUser etc
 
 # System requirements
 
-Python 2.7 only. I do intent to add support for Python 3.x in near future.
+Python 2.7 or Python 3.5
 
 Requires setuptools. It might be already installed on your system, but if not you can use `ez_setup.py` script to install setuptools.
 
